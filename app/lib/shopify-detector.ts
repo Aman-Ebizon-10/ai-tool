@@ -33,8 +33,12 @@ export interface ThemeInfo {
   internalName: string;
   /** schema_name from Shopify.theme — the actual theme product identifier */
   schemaName: string | null;
-  /** schema_version — the theme's version string */
+  /** schema_version — the version running on this store */
   version: string | null;
+  /** Latest known version from our registry (null = not tracked) */
+  latestVersion: string | null;
+  /** true = store is behind latest; null = can't determine */
+  isOutdated: boolean | null;
   /** Shopify internal theme ID */
   themeId: string | null;
   /** Non-null = purchased from Shopify Theme Store */
@@ -183,55 +187,57 @@ function detectApps(html: string): DetectedApp[] {
 // ─── Known-theme registry ──────────────────────────────────────────────────────
 // Keyed by schema_name (lowercase). Maps to display metadata.
 
-const KNOWN_THEMES: Record<string, { name: string; publisher: string; free: boolean }> = {
+type KnownTheme = { name: string; publisher: string; free: boolean; latestVersion?: string };
+
+const KNOWN_THEMES: Record<string, KnownTheme> = {
   // Shopify free themes
-  dawn:       { name: "Dawn",       publisher: "Shopify", free: true },
-  debut:      { name: "Debut",      publisher: "Shopify", free: true },
-  brooklyn:   { name: "Brooklyn",   publisher: "Shopify", free: true },
-  narrative:  { name: "Narrative",  publisher: "Shopify", free: true },
-  venture:    { name: "Venture",    publisher: "Shopify", free: true },
-  supply:     { name: "Supply",     publisher: "Shopify", free: true },
-  minimal:    { name: "Minimal",    publisher: "Shopify", free: true },
-  boundless:  { name: "Boundless",  publisher: "Shopify", free: true },
-  sense:      { name: "Sense",      publisher: "Shopify", free: true },
-  craft:      { name: "Craft",      publisher: "Shopify", free: true },
-  refresh:    { name: "Refresh",    publisher: "Shopify", free: true },
-  crave:      { name: "Crave",      publisher: "Shopify", free: true },
-  ride:       { name: "Ride",       publisher: "Shopify", free: true },
-  origin:     { name: "Origin",     publisher: "Shopify", free: true },
-  studio:     { name: "Studio",     publisher: "Shopify", free: true },
-  colorblock: { name: "Colorblock", publisher: "Shopify", free: true },
-  taste:      { name: "Taste",      publisher: "Shopify", free: true },
-  highlight:  { name: "Highlight",  publisher: "Shopify", free: true },
-  trade:      { name: "Trade",      publisher: "Shopify", free: true },
-  publisher:  { name: "Publisher",  publisher: "Shopify", free: true },
+  dawn:       { name: "Dawn",       publisher: "Shopify", free: true,  latestVersion: "14.0.0" },
+  debut:      { name: "Debut",      publisher: "Shopify", free: true,  latestVersion: "8.2.0"  },
+  brooklyn:   { name: "Brooklyn",   publisher: "Shopify", free: true,  latestVersion: "9.1.0"  },
+  narrative:  { name: "Narrative",  publisher: "Shopify", free: true,  latestVersion: "4.1.0"  },
+  venture:    { name: "Venture",    publisher: "Shopify", free: true,  latestVersion: "7.0.0"  },
+  supply:     { name: "Supply",     publisher: "Shopify", free: true,  latestVersion: "4.0.0"  },
+  minimal:    { name: "Minimal",    publisher: "Shopify", free: true,  latestVersion: "8.0.0"  },
+  boundless:  { name: "Boundless",  publisher: "Shopify", free: true,  latestVersion: "4.0.0"  },
+  sense:      { name: "Sense",      publisher: "Shopify", free: true,  latestVersion: "4.0.0"  },
+  craft:      { name: "Craft",      publisher: "Shopify", free: true,  latestVersion: "4.0.0"  },
+  refresh:    { name: "Refresh",    publisher: "Shopify", free: true,  latestVersion: "5.0.0"  },
+  crave:      { name: "Crave",      publisher: "Shopify", free: true,  latestVersion: "4.0.0"  },
+  ride:       { name: "Ride",       publisher: "Shopify", free: true,  latestVersion: "4.0.0"  },
+  origin:     { name: "Origin",     publisher: "Shopify", free: true,  latestVersion: "4.0.0"  },
+  studio:     { name: "Studio",     publisher: "Shopify", free: true,  latestVersion: "4.0.0"  },
+  colorblock: { name: "Colorblock", publisher: "Shopify", free: true,  latestVersion: "4.0.0"  },
+  taste:      { name: "Taste",      publisher: "Shopify", free: true,  latestVersion: "4.0.0"  },
+  highlight:  { name: "Highlight",  publisher: "Shopify", free: true,  latestVersion: "4.0.0"  },
+  trade:      { name: "Trade",      publisher: "Shopify", free: true,  latestVersion: "4.0.0"  },
+  publisher:  { name: "Publisher",  publisher: "Shopify", free: true,  latestVersion: "4.0.0"  },
+  cascade:    { name: "Cascade",    publisher: "Shopify", free: true,  latestVersion: "4.0.0"  },
+  hero:       { name: "Hero",       publisher: "Shopify", free: true,  latestVersion: "4.0.0"  },
   // Premium themes
-  turbo:      { name: "Turbo",      publisher: "Out of the Sandbox", free: false },
-  flex:       { name: "Flex",       publisher: "Out of the Sandbox", free: false },
-  prestige:   { name: "Prestige",   publisher: "Maestrooo",          free: false },
-  impulse:    { name: "Impulse",    publisher: "Archetype Themes",   free: false },
-  movement:   { name: "Movement",   publisher: "Archetype Themes",   free: false },
-  symmetry:   { name: "Symmetry",   publisher: "Clean Canvas",       free: false },
-  pipeline:   { name: "Pipeline",   publisher: "Groupthought",       free: false },
-  warehouse:  { name: "Warehouse",  publisher: "Pixel Union",        free: false },
-  superstore: { name: "Superstore", publisher: "Pixel Union",        free: false },
-  empire:     { name: "Empire",     publisher: "Pixel Union",        free: false },
-  kingdom:    { name: "Kingdom",    publisher: "Pixel Union",        free: false },
-  streamline: { name: "Streamline", publisher: "Blend Themes",       free: false },
-  vantage:    { name: "Vantage",    publisher: "Eight Themes",       free: false },
-  retina:     { name: "Retina",     publisher: "Clean Canvas",       free: false },
-  atlantic:   { name: "Atlantic",   publisher: "Clean Canvas",       free: false },
-  district:   { name: "District",   publisher: "Style Hatch",        free: false },
-  debutify:   { name: "Debutify",   publisher: "Debutify",           free: false },
-  booster:    { name: "Booster",    publisher: "BoosterTheme",       free: false },
-  envy:       { name: "Envy",       publisher: "Maestrooo",          free: false },
-  focal:      { name: "Focal",      publisher: "Maestrooo",          free: false },
-  motion:     { name: "Motion",     publisher: "Archetype Themes",   free: false },
-  context:    { name: "Context",    publisher: "Archetype Themes",   free: false },
-  cascade:    { name: "Cascade",    publisher: "Shopify",            free: true  },
-  hero:       { name: "Hero",       publisher: "Shopify",            free: true  },
-  expanse:    { name: "Expanse",    publisher: "Pixel Union",        free: false },
-  baseline:   { name: "Baseline",   publisher: "Fuel",               free: false },
+  turbo:      { name: "Turbo",      publisher: "Out of the Sandbox", free: false, latestVersion: "8.0.1"  },
+  flex:       { name: "Flex",       publisher: "Out of the Sandbox", free: false, latestVersion: "8.0.1"  },
+  prestige:   { name: "Prestige",   publisher: "Maestrooo",          free: false, latestVersion: "10.7.2" },
+  impulse:    { name: "Impulse",    publisher: "Archetype Themes",   free: false, latestVersion: "7.3.0"  },
+  movement:   { name: "Movement",   publisher: "Archetype Themes",   free: false, latestVersion: "4.0.0"  },
+  motion:     { name: "Motion",     publisher: "Archetype Themes",   free: false, latestVersion: "10.0.0" },
+  context:    { name: "Context",    publisher: "Archetype Themes",   free: false, latestVersion: "3.0.0"  },
+  symmetry:   { name: "Symmetry",   publisher: "Clean Canvas",       free: false, latestVersion: "7.0.0"  },
+  retina:     { name: "Retina",     publisher: "Clean Canvas",       free: false, latestVersion: "7.0.0"  },
+  atlantic:   { name: "Atlantic",   publisher: "Clean Canvas",       free: false, latestVersion: "7.0.0"  },
+  pipeline:   { name: "Pipeline",   publisher: "Groupthought",       free: false, latestVersion: "5.0.0"  },
+  warehouse:  { name: "Warehouse",  publisher: "Pixel Union",        free: false, latestVersion: "7.0.0"  },
+  superstore: { name: "Superstore", publisher: "Pixel Union",        free: false, latestVersion: "6.0.0"  },
+  empire:     { name: "Empire",     publisher: "Pixel Union",        free: false, latestVersion: "9.0.0"  },
+  kingdom:    { name: "Kingdom",    publisher: "Pixel Union",        free: false, latestVersion: "5.0.0"  },
+  expanse:    { name: "Expanse",    publisher: "Pixel Union",        free: false, latestVersion: "5.0.0"  },
+  streamline: { name: "Streamline", publisher: "Blend Themes",       free: false, latestVersion: "7.0.0"  },
+  vantage:    { name: "Vantage",    publisher: "Eight Themes",       free: false, latestVersion: "8.0.0"  },
+  district:   { name: "District",   publisher: "Style Hatch",        free: false, latestVersion: "7.0.0"  },
+  debutify:   { name: "Debutify",   publisher: "Debutify",           free: false, latestVersion: "5.0.0"  },
+  booster:    { name: "Booster",    publisher: "BoosterTheme",       free: false, latestVersion: "5.0.0"  },
+  envy:       { name: "Envy",       publisher: "Maestrooo",          free: false, latestVersion: "8.0.0"  },
+  focal:      { name: "Focal",      publisher: "Maestrooo",          free: false, latestVersion: "8.0.0"  },
+  baseline:   { name: "Baseline",   publisher: "Fuel",               free: false, latestVersion: "5.0.0"  },
 };
 
 // Formats a raw schema_name slug into a human-readable name.
@@ -241,6 +247,17 @@ function formatSchemaName(s: string): string {
     .replace(/[-_]/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase())
     .trim();
+}
+
+// Returns negative if a < b (a is older), 0 if equal, positive if a > b
+function compareSemver(a: string, b: string): number {
+  const pa = a.replace(/^v/, "").split(".").map(Number);
+  const pb = b.replace(/^v/, "").split(".").map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const diff = (pa[i] ?? 0) - (pb[i] ?? 0);
+    if (diff !== 0) return diff;
+  }
+  return 0;
 }
 
 // ─── Theme extraction ──────────────────────────────────────────────────────────
@@ -289,12 +306,19 @@ function extractThemeInfo(html: string): ThemeInfo | null {
 
     const key = schemaName?.toLowerCase() ?? "";
     const known = KNOWN_THEMES[key];
+    const latestVersion = known?.latestVersion ?? null;
+    const isOutdated =
+      version && latestVersion
+        ? compareSemver(version, latestVersion) < 0
+        : null;
 
     return {
       name: known?.name ?? (schemaName ? formatSchemaName(schemaName) : internalName || "Unknown Theme"),
       internalName,
       schemaName,
       version,
+      latestVersion,
+      isOutdated,
       themeId,
       themeStoreId,
       role,
@@ -320,16 +344,18 @@ function extractThemeInfo(html: string): ThemeInfo | null {
     if (re.test(html)) {
       const known = KNOWN_THEMES[key];
       return {
-        name:         known?.name ?? formatSchemaName(key),
-        internalName: "",
-        schemaName:   key,
-        version:      null,
-        themeId:      null,
-        themeStoreId: null,
-        role:         null,
-        publisher:    known?.publisher ?? null,
-        free:         known?.free ?? null,
-        confidence:   "low",
+        name:          known?.name ?? formatSchemaName(key),
+        internalName:  "",
+        schemaName:    key,
+        version:       null,
+        latestVersion: known?.latestVersion ?? null,
+        isOutdated:    null, // can't compare without a detected version
+        themeId:       null,
+        themeStoreId:  null,
+        role:          null,
+        publisher:     known?.publisher ?? null,
+        free:          known?.free ?? null,
+        confidence:    "low",
       };
     }
   }
