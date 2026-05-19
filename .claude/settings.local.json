@@ -1,0 +1,40 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Ebizon\\\\projects\\\\ai-tool\" -Force)",
+      "Bash(Select-Object Name, PSIsContainer)",
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --no-src-dir --import-alias \"@/*\" --yes)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Ebizon\\\\projects\\\\ai-tool\" -Depth 2 -Directory)",
+      "Bash(Select-Object FullName)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\Ebizon\\\\projects\\\\ai-tool\" -Depth 2 -Directory | Where-Object { $_.Name -ne 'node_modules' } | Select-Object FullName)",
+      "Bash(Get-ChildItem \"C:\\\\Users\\\\Ebizon\\\\projects\\\\ai-tool\\\\node_modules\\\\next\\\\dist\\\\docs\" -ErrorAction SilentlyContinue)",
+      "Bash(Select-Object Name)",
+      "Bash(curl -s -X POST http://localhost:3000/api/scan -H 'Content-Type: application/json' -d '{\"url\":\"https://allbirds.com\"}')",
+      "Bash(python3 -m json.tool)",
+      "Bash(curl -s -X POST http://localhost:3000/api/scan -H \"Content-Type: application/json\" -d '{\"url\":\"https://allbirds.com\"}')",
+      "Bash(curl -s \"https://allbirds.com\")",
+      "Bash(curl -s \"https://gymshark.com\")",
+      "Bash(curl -s -A \"Mozilla/5.0\" \"https://allbirds.com\")",
+      "Bash(python3 -c ' *)",
+      "Bash(node *)",
+      "Bash(curl -s -L -A \"Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36\" -H \"Accept: text/html\" \"https://ketnipz.myshopify.com\")",
+      "Bash(curl -sL -A \"Mozilla/5.0\" \"https://ketnipz.myshopify.com\")",
+      "Bash(curl -so /dev/null -w \"%{http_code} %{url_effective}\" -L -A \"Mozilla/5.0\" \"https://ketnipz.myshopify.com\")",
+      "Bash(curl -sL -A \"Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\)\" -H \"Accept: text/html\" \"https://www.ketnipz.com\")",
+      "Bash(grep -oE '\"theme\"\\\\s*:\\\\s*\\\\{[^}]{0,200}\\\\}')",
+      "Bash(curl -sL -A 'Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36 \\(KHTML, like Gecko\\) Chrome/120.0.0.0 Safari/537.36' -H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8' -H 'Accept-Language: en-US,en;q=0.5' -H 'Accept-Encoding: identity' https://www.ketnipz.com)",
+      "Bash(curl -s -X POST http://localhost:3000/api/scan -H 'Content-Type: application/json' -d '{\"url\":\"https://www.ketnipz.com\"}')",
+      "Bash(curl -s -X POST http://localhost:3000/api/scan -H 'Content-Type: application/json' -d '{\"url\":\"https://gymshark.com\"}')",
+      "Bash(curl -s -X POST http://localhost:3000/api/scan -H 'Content-Type: application/json' -d '{\"url\":\"https://studs.com\"}')",
+      "Bash(curl -s -X POST http://localhost:3000/api/scan -H 'Content-Type: application/json' -d '{\"url\":\"https://www.tentree.com\"}')",
+      "Bash(curl -s -X POST http://localhost:3000/api/scan -H \"Content-Type: application/json\" -d \"{\\\\\"url\\\\\":\\\\\"allbirds.com\\\\\"}\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('SEO:', d['seo']['score'], 'Perf:', d['performance']['score'], 'Scripts:', d['performance']['scriptCount'], 'Lazy%:', round\\(d['performance']['lazyImageCount']/max\\(d['performance']['imageCount'],1\\)*100\\), 'Theme:', d['theme']['name'] if d['theme'] else 'None', 'Apps:', len\\(d['apps']\\)\\)\")",
+      "Bash(curl -s -X POST http://localhost:3000/api/scan -H \"Content-Type: application/json\" -d \"{\\\\\"url\\\\\":\\\\\"allbirds.com\\\\\"}\" -o /tmp/scan_result.json)",
+      "Bash(curl -s -X POST http://localhost:3000/api/scan -H \"Content-Type: application/json\" -d \"{\\\\\"url\\\\\":\\\\\"allbirds.com\\\\\"}\" -o \"C:/Users/Ebizon/scan_result.json\")",
+      "Bash(curl *)",
+      "Bash(npm run *)",
+      "Bash(git -C \"C:/Users/Ebizon/projects/ai-tool\" add -A)",
+      "Bash(git -C \"C:/Users/Ebizon/projects/ai-tool\" status --short)"
+    ]
+  }
+}
