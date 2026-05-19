@@ -7,7 +7,7 @@ export type AppCategory =
   | "Live Chat"
   | "Search"
   | "Analytics"
-  | "Upsell"
+  | "Upsell / CRO"
   | "Subscriptions"
   | "Social Proof"
   | "Wishlist"
@@ -17,6 +17,7 @@ export interface DetectedApp {
   id: string;
   name: string;
   category: AppCategory;
+  impact?: "low" | "medium" | "high";
 }
 
 export interface ShopifySignal {
@@ -73,6 +74,11 @@ export interface SeoAudit {
   checks: SeoCheck[];
 }
 
+export interface CwvEstimate {
+  value: number;
+  rating: "fast" | "moderate" | "slow";
+}
+
 export interface PerformanceMetrics {
   score: number;
   scriptCount: number;
@@ -82,6 +88,13 @@ export interface PerformanceMetrics {
   renderBlockingCount: number;
   hasResourceHints: boolean;
   htmlSizeKb: number;
+  /** Heuristic estimates derived from static HTML signals — not real field data */
+  cwv: {
+    lcp: CwvEstimate; // seconds
+    fcp: CwvEstimate; // seconds
+    inp: CwvEstimate; // milliseconds
+    cls: CwvEstimate; // unitless
+  };
 }
 
 export interface ScanResult {
@@ -102,83 +115,89 @@ export interface ScanResult {
 // ─── App registry ─────────────────────────────────────────────────────────────
 // Each entry lists string signals: if ANY appears in the HTML, the app is detected.
 
-const APP_REGISTRY: Array<{ id: string; name: string; category: AppCategory; signals: string[] }> = [
+const APP_REGISTRY: Array<{
+  id: string;
+  name: string;
+  category: AppCategory;
+  signals: string[];
+  impact?: "low" | "medium" | "high";
+}> = [
   // Email & SMS
-  { id: "klaviyo",     name: "Klaviyo",          category: "Email & SMS",   signals: ["klaviyo.com/onsite", "klaviyo.com/media/js", "KlaviyoSubscribe"] },
-  { id: "omnisend",    name: "Omnisend",          category: "Email & SMS",   signals: ["omnisend.com", "OmnisendFormDisplay"] },
-  { id: "attentive",   name: "Attentive",         category: "Email & SMS",   signals: ["attn.tv", "attentive_tag"] },
-  { id: "postscript",  name: "Postscript",        category: "Email & SMS",   signals: ["postscript.io"] },
-  { id: "smsbump",     name: "SMSBump",           category: "Email & SMS",   signals: ["smsbump.com"] },
-  { id: "privy",       name: "Privy",             category: "Email & SMS",   signals: ["privy.com/v2/snippet.js", "PrivyOverlay"] },
-  { id: "drip",        name: "Drip",              category: "Email & SMS",   signals: ["getdrip.com"] },
-  { id: "recart",      name: "Recart",            category: "Email & SMS",   signals: ["recart.com"] },
-  { id: "sendlane",    name: "Sendlane",          category: "Email & SMS",   signals: ["sendlane.com"] },
+  { id: "klaviyo",     name: "Klaviyo",          category: "Email & SMS",   impact: "high",   signals: ["klaviyo.com/onsite", "klaviyo.com/media/js", "KlaviyoSubscribe"] },
+  { id: "omnisend",    name: "Omnisend",          category: "Email & SMS",   impact: "medium", signals: ["omnisend.com", "OmnisendFormDisplay"] },
+  { id: "attentive",   name: "Attentive",         category: "Email & SMS",   impact: "high",   signals: ["attn.tv", "attentive_tag"] },
+  { id: "postscript",  name: "Postscript",        category: "Email & SMS",   impact: "low",    signals: ["postscript.io"] },
+  { id: "smsbump",     name: "SMSBump",           category: "Email & SMS",   impact: "low",    signals: ["smsbump.com"] },
+  { id: "privy",       name: "Privy",             category: "Email & SMS",   impact: "medium", signals: ["privy.com/v2/snippet.js", "PrivyOverlay"] },
+  { id: "drip",        name: "Drip",              category: "Email & SMS",   impact: "low",    signals: ["getdrip.com"] },
+  { id: "recart",      name: "Recart",            category: "Email & SMS",   impact: "low",    signals: ["recart.com"] },
+  { id: "sendlane",    name: "Sendlane",          category: "Email & SMS",   impact: "low",    signals: ["sendlane.com"] },
   // Reviews
-  { id: "judgeme",     name: "Judge.me",          category: "Reviews",       signals: ["judge.me", "jdgm-"] },
-  { id: "yotpo",       name: "Yotpo",             category: "Reviews",       signals: ["yotpo.com/assets", "yotpoWidgetsContainer", "yotpo.com/widget"] },
-  { id: "loox",        name: "Loox",              category: "Reviews",       signals: ["loox.io"] },
-  { id: "stamped",     name: "Stamped.io",        category: "Reviews",       signals: ["stamped.io"] },
-  { id: "okendo",      name: "Okendo",            category: "Reviews",       signals: ["okendo.io"] },
-  { id: "reviews_io",  name: "Reviews.io",        category: "Reviews",       signals: ["widget.reviews.io", "reviews.io/media"] },
-  { id: "fera",        name: "Fera.ai",           category: "Reviews",       signals: ["fera.ai", "fera-widget"] },
-  { id: "ali_reviews", name: "Ali Reviews",       category: "Reviews",       signals: ["alireviews.io", "ali-reviews"] },
+  { id: "judgeme",     name: "Judge.me",          category: "Reviews",       impact: "medium", signals: ["judge.me", "jdgm-"] },
+  { id: "yotpo",       name: "Yotpo",             category: "Reviews",       impact: "high",   signals: ["yotpo.com/assets", "yotpoWidgetsContainer", "yotpo.com/widget"] },
+  { id: "loox",        name: "Loox",              category: "Reviews",       impact: "low",    signals: ["loox.io"] },
+  { id: "stamped",     name: "Stamped.io",        category: "Reviews",       impact: "low",    signals: ["stamped.io"] },
+  { id: "okendo",      name: "Okendo",            category: "Reviews",       impact: "medium", signals: ["okendo.io"] },
+  { id: "reviews_io",  name: "Reviews.io",        category: "Reviews",       impact: "low",    signals: ["widget.reviews.io", "reviews.io/media"] },
+  { id: "fera",        name: "Fera.ai",           category: "Reviews",       impact: "low",    signals: ["fera.ai", "fera-widget"] },
+  { id: "ali_reviews", name: "Ali Reviews",       category: "Reviews",       impact: "low",    signals: ["alireviews.io", "ali-reviews"] },
   // Loyalty & Rewards
-  { id: "smile",       name: "Smile.io",          category: "Loyalty",       signals: ["smile.io", "smile-ui", "bitlabs_smile"] },
-  { id: "loyaltylion", name: "LoyaltyLion",       category: "Loyalty",       signals: ["loyaltylion.com", "LoyaltyLion"] },
-  { id: "growave",     name: "Growave",           category: "Loyalty",       signals: ["growave.io", "socialshopwave.com"] },
-  { id: "rise",        name: "Rise.ai",           category: "Loyalty",       signals: ["rise.ai", "rswidget"] },
-  { id: "yotpo_loyalty", name: "Yotpo Loyalty",  category: "Loyalty",       signals: ["swell.is", "swellrewards"] },
+  { id: "smile",       name: "Smile.io",          category: "Loyalty",       impact: "medium", signals: ["smile.io", "smile-ui", "bitlabs_smile"] },
+  { id: "loyaltylion", name: "LoyaltyLion",       category: "Loyalty",       impact: "medium", signals: ["loyaltylion.com", "LoyaltyLion"] },
+  { id: "growave",     name: "Growave",           category: "Loyalty",       impact: "low",    signals: ["growave.io", "socialshopwave.com"] },
+  { id: "rise",        name: "Rise.ai",           category: "Loyalty",       impact: "low",    signals: ["rise.ai", "rswidget"] },
+  { id: "yotpo_loyalty", name: "Yotpo Loyalty",  category: "Loyalty",       impact: "medium", signals: ["swell.is", "swellrewards"] },
   // Live Chat & Support
-  { id: "gorgias",     name: "Gorgias",           category: "Live Chat",     signals: ["gorgias.com", "GorgiasChat"] },
-  { id: "tidio",       name: "Tidio",             category: "Live Chat",     signals: ["tidiochat.com"] },
-  { id: "intercom",    name: "Intercom",          category: "Live Chat",     signals: ["intercomSettings", "widget.intercom.io"] },
-  { id: "zendesk",     name: "Zendesk",           category: "Live Chat",     signals: ["zdassets.com", "zopim"] },
-  { id: "reamaze",     name: "Re:amaze",          category: "Live Chat",     signals: ["reamaze.com"] },
-  { id: "helpscout",   name: "Help Scout",        category: "Live Chat",     signals: ["helpscout.net", "beacon-v2.helpscout.net"] },
-  { id: "freshdesk",   name: "Freshdesk",         category: "Live Chat",     signals: ["freshdesk.com/widget", "freshwidget.com"] },
-  { id: "livechat",    name: "LiveChat",          category: "Live Chat",     signals: ["livechatinc.com", "livechat-static.com"] },
+  { id: "gorgias",     name: "Gorgias",           category: "Live Chat",     impact: "medium", signals: ["gorgias.com", "GorgiasChat"] },
+  { id: "tidio",       name: "Tidio",             category: "Live Chat",     impact: "low",    signals: ["tidiochat.com"] },
+  { id: "intercom",    name: "Intercom",          category: "Live Chat",     impact: "high",   signals: ["intercomSettings", "widget.intercom.io"] },
+  { id: "zendesk",     name: "Zendesk",           category: "Live Chat",     impact: "medium", signals: ["zdassets.com", "zopim"] },
+  { id: "reamaze",     name: "Re:amaze",          category: "Live Chat",     impact: "low",    signals: ["reamaze.com"] },
+  { id: "helpscout",   name: "Help Scout",        category: "Live Chat",     impact: "low",    signals: ["helpscout.net", "beacon-v2.helpscout.net"] },
+  { id: "freshdesk",   name: "Freshdesk",         category: "Live Chat",     impact: "low",    signals: ["freshdesk.com/widget", "freshwidget.com"] },
+  { id: "livechat",    name: "LiveChat",          category: "Live Chat",     impact: "low",    signals: ["livechatinc.com", "livechat-static.com"] },
   // Search
-  { id: "searchanise", name: "Searchanise",       category: "Search",        signals: ["searchanise.com"] },
-  { id: "klevu",       name: "Klevu",             category: "Search",        signals: ["klevu.com"] },
-  { id: "boost",       name: "Boost Commerce",    category: "Search",        signals: ["boostcommerce.net"] },
-  { id: "searchpie",   name: "SearchPie",         category: "Search",        signals: ["searchpie.com"] },
-  { id: "doofinder",   name: "Doofinder",         category: "Search",        signals: ["doofinder.com"] },
-  { id: "searchie",    name: "Fast Simon",        category: "Search",        signals: ["fastsimon.com", "searchanise-widget"] },
+  { id: "searchanise", name: "Searchanise",       category: "Search",        impact: "low",    signals: ["searchanise.com"] },
+  { id: "klevu",       name: "Klevu",             category: "Search",        impact: "medium", signals: ["klevu.com"] },
+  { id: "boost",       name: "Boost Commerce",    category: "Search",        impact: "medium", signals: ["boostcommerce.net"] },
+  { id: "searchpie",   name: "SearchPie",         category: "Search",        impact: "low",    signals: ["searchpie.com"] },
+  { id: "doofinder",   name: "Doofinder",         category: "Search",        impact: "low",    signals: ["doofinder.com"] },
+  { id: "searchie",    name: "Fast Simon",        category: "Search",        impact: "medium", signals: ["fastsimon.com", "searchanise-widget"] },
   // Analytics & Heatmaps
-  { id: "hotjar",      name: "Hotjar",            category: "Analytics",     signals: ["hotjar.com", "_hjSettings"] },
-  { id: "luckyorange", name: "Lucky Orange",      category: "Analytics",     signals: ["luckyorange.com"] },
-  { id: "clarity",     name: "Microsoft Clarity", category: "Analytics",     signals: ["clarity.ms"] },
-  { id: "heap",        name: "Heap",              category: "Analytics",     signals: ["heapanalytics.com"] },
-  { id: "segment",     name: "Segment",           category: "Analytics",     signals: ["cdn.segment.io"] },
-  { id: "triplewhale", name: "Triple Whale",      category: "Analytics",     signals: ["triplewhale.com"] },
-  // Upsell & Conversion
-  { id: "reconvert",   name: "ReConvert",         category: "Upsell",        signals: ["reconvert.com"] },
-  { id: "bold",        name: "Bold Commerce",     category: "Upsell",        signals: ["boldcommerce.com"] },
-  { id: "honeycomb",   name: "Honeycomb",         category: "Upsell",        signals: ["honeycombapp.com"] },
-  { id: "zipify",      name: "Zipify Pages",      category: "Upsell",        signals: ["zipify.com"] },
-  { id: "frequently",  name: "Frequently Bought Together", category: "Upsell", signals: ["frequently-bought-together", "fbt-product"] },
+  { id: "hotjar",      name: "Hotjar",            category: "Analytics",     impact: "high",   signals: ["hotjar.com", "_hjSettings"] },
+  { id: "luckyorange", name: "Lucky Orange",      category: "Analytics",     impact: "high",   signals: ["luckyorange.com"] },
+  { id: "clarity",     name: "Microsoft Clarity", category: "Analytics",     impact: "medium", signals: ["clarity.ms"] },
+  { id: "heap",        name: "Heap",              category: "Analytics",     impact: "high",   signals: ["heapanalytics.com"] },
+  { id: "segment",     name: "Segment",           category: "Analytics",     impact: "high",   signals: ["cdn.segment.io"] },
+  { id: "triplewhale", name: "Triple Whale",      category: "Analytics",     impact: "medium", signals: ["triplewhale.com"] },
+  // Upsell & CRO
+  { id: "reconvert",   name: "ReConvert",         category: "Upsell / CRO",  impact: "low",    signals: ["reconvert.com"] },
+  { id: "bold",        name: "Bold Commerce",     category: "Upsell / CRO",  impact: "medium", signals: ["boldcommerce.com"] },
+  { id: "honeycomb",   name: "Honeycomb",         category: "Upsell / CRO",  impact: "low",    signals: ["honeycombapp.com"] },
+  { id: "zipify",      name: "Zipify Pages",      category: "Upsell / CRO",  impact: "medium", signals: ["zipify.com"] },
+  { id: "frequently",  name: "Frequently Bought Together", category: "Upsell / CRO", impact: "low", signals: ["frequently-bought-together", "fbt-product"] },
   // Subscriptions
-  { id: "recharge",    name: "Recharge",          category: "Subscriptions", signals: ["rechargepayments.com", "recharge_cart"] },
-  { id: "skio",        name: "Skio",              category: "Subscriptions", signals: ["skio.com"] },
-  { id: "ordergroove", name: "Ordergroove",       category: "Subscriptions", signals: ["ordergroove.com"] },
-  { id: "seal_subscriptions", name: "Seal Subscriptions", category: "Subscriptions", signals: ["seal-subscriptions.com"] },
+  { id: "recharge",    name: "Recharge",          category: "Subscriptions", impact: "medium", signals: ["rechargepayments.com", "recharge_cart"] },
+  { id: "skio",        name: "Skio",              category: "Subscriptions", impact: "low",    signals: ["skio.com"] },
+  { id: "ordergroove", name: "Ordergroove",       category: "Subscriptions", impact: "medium", signals: ["ordergroove.com"] },
+  { id: "seal_subscriptions", name: "Seal Subscriptions", category: "Subscriptions", impact: "low", signals: ["seal-subscriptions.com"] },
   // Social Proof
-  { id: "fomo",        name: "Fomo",              category: "Social Proof",  signals: ["fomo.com", "FomoClient"] },
-  { id: "trustpulse",  name: "TrustPulse",        category: "Social Proof",  signals: ["trustpulse.com"] },
-  { id: "nextsale",    name: "Nextsale",          category: "Social Proof",  signals: ["nextsale.io"] },
+  { id: "fomo",        name: "Fomo",              category: "Social Proof",  impact: "low",    signals: ["fomo.com", "FomoClient"] },
+  { id: "trustpulse",  name: "TrustPulse",        category: "Social Proof",  impact: "low",    signals: ["trustpulse.com"] },
+  { id: "nextsale",    name: "Nextsale",          category: "Social Proof",  impact: "low",    signals: ["nextsale.io"] },
   // Wishlist
-  { id: "swym",        name: "Wishlist Plus",     category: "Wishlist",      signals: ["swymcart.com", "swymRelay"] },
-  { id: "wishlist_hero", name: "Wishlist Hero",   category: "Wishlist",      signals: ["wishlist-hero.com"] },
+  { id: "swym",        name: "Wishlist Plus",     category: "Wishlist",      impact: "low",    signals: ["swymcart.com", "swymRelay"] },
+  { id: "wishlist_hero", name: "Wishlist Hero",   category: "Wishlist",      impact: "low",    signals: ["wishlist-hero.com"] },
   // Shipping & Tracking
-  { id: "aftership",   name: "AfterShip",         category: "Shipping",      signals: ["aftership.com"] },
-  { id: "parcellab",   name: "Parcellab",         category: "Shipping",      signals: ["parcellab.com"] },
+  { id: "aftership",   name: "AfterShip",         category: "Shipping",      impact: "low",    signals: ["aftership.com"] },
+  { id: "parcellab",   name: "Parcellab",         category: "Shipping",      impact: "low",    signals: ["parcellab.com"] },
 ];
 
 function detectApps(html: string): DetectedApp[] {
   const detected: DetectedApp[] = [];
   for (const def of APP_REGISTRY) {
     if (def.signals.some((s) => html.includes(s))) {
-      detected.push({ id: def.id, name: def.name, category: def.category });
+      detected.push({ id: def.id, name: def.name, category: def.category, impact: def.impact });
     }
   }
   return detected;
@@ -553,6 +572,39 @@ function analyzePerformance(html: string): PerformanceMetrics {
   if (htmlSizeKb < 150) score += 5;
   else if (htmlSizeKb > 500) score -= 10;
 
+  // ── Core Web Vitals heuristic estimates ────────────────────────────────────
+  // Derived from static HTML signals; not real field data.
+  const lazyPct = imageCount > 0 ? lazyImageCount / imageCount : 1;
+
+  // LCP (Largest Contentful Paint) — thresholds: <2.5s fast, 2.5–4s moderate, >4s slow
+  let lcpVal = 1.2;
+  lcpVal += Math.min(renderBlockingCount * 0.55, 2.5);
+  lcpVal += htmlSizeKb > 600 ? 0.6 : htmlSizeKb > 300 ? 0.3 : 0;
+  if (!hasResourceHints) lcpVal += 0.2;
+  if (imageCount > 5 && lazyPct < 0.2) lcpVal += 0.3;
+  lcpVal = Math.max(0.5, Math.round(lcpVal * 10) / 10);
+
+  // FCP (First Contentful Paint) — thresholds: <1.8s fast, 1.8–3s moderate, >3s slow
+  let fcpVal = 0.7;
+  fcpVal += Math.min(renderBlockingCount * 0.45, 1.8);
+  fcpVal += htmlSizeKb > 500 ? 0.3 : htmlSizeKb > 250 ? 0.15 : 0;
+  if (hasResourceHints) fcpVal -= 0.15;
+  fcpVal = Math.max(0.3, Math.round(fcpVal * 10) / 10);
+
+  // INP (Interaction to Next Paint) — thresholds: <200ms fast, 200–500ms moderate, >500ms slow
+  const inpVal = Math.round(
+    Math.min(80 + scriptCount * 5 + renderBlockingCount * 20, 700) / 10
+  ) * 10;
+
+  // CLS (Cumulative Layout Shift) — thresholds: <0.1 fast, 0.1–0.25 moderate, >0.25 slow
+  let clsVal = 0.04;
+  if (imageCount > 0) clsVal += (1 - lazyPct) * 0.22;
+  clsVal = Math.max(0, Math.round(clsVal * 100) / 100);
+
+  function cwvRating(val: number, fastThresh: number, moderateThresh: number): "fast" | "moderate" | "slow" {
+    return val < fastThresh ? "fast" : val < moderateThresh ? "moderate" : "slow";
+  }
+
   return {
     score: Math.max(0, Math.min(100, Math.round(score))),
     scriptCount,
@@ -562,6 +614,12 @@ function analyzePerformance(html: string): PerformanceMetrics {
     renderBlockingCount,
     hasResourceHints,
     htmlSizeKb,
+    cwv: {
+      lcp: { value: lcpVal, rating: cwvRating(lcpVal, 2.5, 4) },
+      fcp: { value: fcpVal, rating: cwvRating(fcpVal, 1.8, 3) },
+      inp: { value: inpVal, rating: cwvRating(inpVal, 200, 500) },
+      cls: { value: clsVal, rating: cwvRating(clsVal, 0.1, 0.25) },
+    },
   };
 }
 

@@ -112,9 +112,9 @@ const stats = [
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#F7F8FA]">
       {/* ── Navbar ── */}
-      <header className="fixed inset-x-0 top-0 z-50 bg-slate-950/90 backdrop-blur-md border-b border-white/5">
+      <header className="fixed inset-x-0 top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200">
         <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex h-16 items-center justify-between">
           <div className="flex items-center gap-2.5">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500">
@@ -122,12 +122,12 @@ export default function Home() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
               </svg>
             </span>
-            <span className="text-lg font-bold text-white">ShopAudit</span>
+            <span className="text-lg font-bold text-slate-900">ShopAudit</span>
           </div>
 
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">
-            <a href="#features" className="hover:text-white transition-colors">Features</a>
-            <a href="#how-it-works" className="hover:text-white transition-colors">How it works</a>
+          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-500">
+            <a href="#features" className="hover:text-slate-900 transition-colors">Features</a>
+            <a href="#how-it-works" className="hover:text-slate-900 transition-colors">How it works</a>
           </div>
 
           <a
@@ -140,61 +140,44 @@ export default function Home() {
       </header>
 
       {/* ── Hero ── */}
-      <section
-        id="scan"
-        className="relative overflow-hidden bg-slate-950 pb-28 pt-36"
-      >
-        {/* Background glow */}
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(ellipse 80% 50% at 50% -10%, rgba(99,102,241,0.18) 0%, transparent 70%)",
-          }}
-        />
-        {/* Dot grid */}
-        <div
-          className="pointer-events-none absolute inset-0 opacity-25"
-          style={{
-            backgroundImage:
-              "radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px)",
-            backgroundSize: "28px 28px",
-          }}
-        />
+      <section id="scan" className="bg-white pb-28 pt-36">
+        {/* Outer wrapper expands to 7xl so results card has room */}
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          {/* Hero text — keep centered and narrow */}
+          <div className="mx-auto max-w-4xl text-center">
+            <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-4 py-1.5 text-sm font-medium text-indigo-600">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-indigo-500" />
+              Free Shopify Store Analyzer
+            </div>
 
-        <div className="relative mx-auto max-w-4xl px-4 sm:px-6 text-center">
-          {/* Badge */}
-          <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-4 py-1.5 text-sm font-medium text-indigo-400">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-indigo-400" />
-            Free Shopify Store Analyzer
+            <h1 className="mb-6 text-5xl font-bold tracking-tight text-slate-900 sm:text-6xl md:text-7xl leading-[1.08]">
+              Audit Any Shopify Store{" "}
+              <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-cyan-600 bg-clip-text text-transparent">
+                in Seconds
+              </span>
+            </h1>
+
+            <p className="mx-auto mb-10 max-w-2xl text-lg leading-relaxed text-[#475569]">
+              Instantly uncover the theme, installed apps, SEO health, and Core Web Vitals for any Shopify store — no login required.
+            </p>
           </div>
 
-          <h1 className="mb-6 text-5xl font-bold tracking-tight text-white sm:text-6xl md:text-7xl leading-[1.08]">
-            Audit Any Shopify Store{" "}
-            <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
-              in Seconds
-            </span>
-          </h1>
-
-          <p className="mx-auto mb-10 max-w-2xl text-lg leading-relaxed text-slate-400">
-            Instantly uncover the theme, installed apps, SEO health, and Core Web Vitals for any Shopify store — no login required.
-          </p>
-
+          {/* Form + results — expands with the 7xl outer wrapper */}
           <ScanForm variant="dark" />
 
-          <p className="mt-5 text-sm text-slate-600">
+          <p className="mt-5 text-center text-sm text-slate-400">
             No account needed &nbsp;·&nbsp; 100% free &nbsp;·&nbsp; Results in under 30 seconds
           </p>
         </div>
       </section>
 
       {/* ── Stats bar ── */}
-      <div className="bg-slate-900 border-b border-white/5">
+      <div className="border-y border-slate-100 bg-slate-50">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-          <dl className="grid grid-cols-2 divide-x divide-white/5 md:grid-cols-4">
+          <dl className="grid grid-cols-2 divide-x divide-slate-100 md:grid-cols-4">
             {stats.map((s) => (
               <div key={s.label} className="flex flex-col items-center py-8 px-4 text-center">
-                <dt className="text-2xl font-bold text-white">{s.value}</dt>
+                <dt className="text-2xl font-bold text-slate-900">{s.value}</dt>
                 <dd className="mt-1 text-sm text-slate-500">{s.label}</dd>
               </div>
             ))}

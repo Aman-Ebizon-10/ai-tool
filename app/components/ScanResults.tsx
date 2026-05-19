@@ -1,5 +1,6 @@
 import type {
   AppCategory,
+  CwvEstimate,
   DetectedApp,
   PerformanceMetrics,
   ScanResult,
@@ -295,49 +296,59 @@ function ThemeCard({
 
 // ─── Apps Card ─────────────────────────────────────────────────────────────────
 
-const CATEGORY_STYLE: Record<AppCategory, { dot: string }> = {
-  "Email & SMS": { dot: "bg-sky-500" },
-  Reviews:       { dot: "bg-amber-500" },
-  Loyalty:       { dot: "bg-violet-500" },
-  "Live Chat":   { dot: "bg-emerald-500" },
-  Search:        { dot: "bg-cyan-500" },
-  Analytics:     { dot: "bg-orange-500" },
-  Upsell:        { dot: "bg-rose-500" },
-  Subscriptions: { dot: "bg-teal-500" },
-  "Social Proof":{ dot: "bg-lime-500" },
-  Wishlist:      { dot: "bg-pink-500" },
-  Shipping:      { dot: "bg-slate-400" },
+const SHOWN_CATEGORIES: AppCategory[] = [
+  "Email & SMS",
+  "Reviews",
+  "Analytics",
+  "Upsell / CRO",
+];
+
+const CATEGORY_CONFIG: Partial<Record<AppCategory, { dot: string; badge: string }>> = {
+  "Email & SMS":  { dot: "bg-sky-500",    badge: "bg-sky-50 text-sky-700 ring-sky-200" },
+  "Reviews":      { dot: "bg-amber-500",  badge: "bg-amber-50 text-amber-700 ring-amber-200" },
+  "Analytics":    { dot: "bg-orange-500", badge: "bg-orange-50 text-orange-700 ring-orange-200" },
+  "Upsell / CRO": { dot: "bg-rose-500",  badge: "bg-rose-50 text-rose-700 ring-rose-200" },
 };
 
-const CATEGORY_ORDER: AppCategory[] = [
-  "Email & SMS",
-  "Reviews",
-  "Loyalty",
-  "Live Chat",
-  "Search",
-  "Analytics",
-  "Upsell",
-  "Subscriptions",
-  "Social Proof",
-  "Wishlist",
-  "Shipping",
-];
+const IMPACT_STYLE: Record<"low" | "medium" | "high", string> = {
+  high:   "bg-rose-50 text-rose-700 ring-rose-200",
+  medium: "bg-amber-50 text-amber-700 ring-amber-200",
+  low:    "bg-slate-100 text-slate-500 ring-slate-200",
+};
 
-const PERF_IMPACT_IDS = new Set([
-  "hotjar",
-  "luckyorange",
-  "heap",
-  "segment",
-  "clarity",
-  "triplewhale",
-]);
+const IMPACT_LABEL: Record<"low" | "medium" | "high", string> = {
+  high: "High",
+  medium: "Med",
+  low: "Low",
+};
 
-const OVERLAP_CATEGORIES: AppCategory[] = [
-  "Email & SMS",
-  "Reviews",
-  "Live Chat",
-  "Subscriptions",
-];
+function AppRow({ app }: { app: DetectedApp }) {
+  const cfg = CATEGORY_CONFIG[app.category];
+  return (
+    <div className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-slate-50">
+      <span
+        className={`h-1.5 w-1.5 shrink-0 rounded-full ${cfg?.dot ?? "bg-slate-400"}`}
+      />
+      <span className="min-w-0 flex-1 truncate text-xs font-medium text-slate-700">
+        {app.name}
+      </span>
+      <span
+        className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium ring-1 ${
+          cfg?.badge ?? "bg-slate-100 text-slate-500 ring-slate-200"
+        }`}
+      >
+        {app.category}
+      </span>
+      {app.impact && (
+        <span
+          className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ring-1 ${IMPACT_STYLE[app.impact]}`}
+        >
+          {IMPACT_LABEL[app.impact]}
+        </span>
+      )}
+    </div>
+  );
+}
 
 function AppsCard({
   apps,
@@ -346,18 +357,21 @@ function AppsCard({
   apps: DetectedApp[];
   isShopify: boolean;
 }) {
-  const grouped = CATEGORY_ORDER.reduce<Record<string, DetectedApp[]>>(
-    (acc, cat) => {
-      const items = apps.filter((a) => a.category === cat);
-      if (items.length) acc[cat] = items;
-      return acc;
-    },
-    {}
+  const primaryGroups = SHOWN_CATEGORIES
+    .map((cat) => ({ cat, items: apps.filter((a) => a.category === cat) }))
+    .filter((g) => g.items.length > 0);
+
+  const otherApps = apps.filter(
+    (a) => !SHOWN_CATEGORIES.includes(a.category)
   );
 
-  const overlapWarnings = OVERLAP_CATEGORIES.filter(
-    (cat) => (grouped[cat]?.length ?? 0) > 1
-  );
+  const overlapWarnings = primaryGroups
+    .filter(
+      (g) =>
+        g.items.length > 1 &&
+        (g.cat === "Email & SMS" || g.cat === "Reviews")
+    )
+    .map((g) => g);
 
   return (
     <div className="flex flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -397,12 +411,11 @@ function AppsCard({
       {!isShopify ? (
         <p className="text-sm text-slate-400">Not a Shopify store</p>
       ) : apps.length === 0 ? (
-        <p className="text-sm text-slate-400">
-          No known third-party apps detected
-        </p>
+        <p className="text-sm text-slate-400">No known third-party apps detected</p>
       ) : (
-        <div className="flex flex-col gap-3 overflow-y-auto" style={{ maxHeight: "280px" }}>
-          {overlapWarnings.map((cat) => (
+        <div className="flex flex-col gap-4 overflow-y-auto" style={{ maxHeight: "320px" }}>
+          {/* Overlap warnings */}
+          {overlapWarnings.map(({ cat, items }) => (
             <div
               key={`overlap-${cat}`}
               className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2"
@@ -421,41 +434,43 @@ function AppsCard({
                 />
               </svg>
               <p className="text-xs font-medium text-amber-700">
-                {grouped[cat]?.length} {cat} apps detected — may conflict
+                {items.length} {cat} apps detected — may conflict
               </p>
             </div>
           ))}
 
-          {Object.entries(grouped).map(([cat, items]) => {
-            const style = CATEGORY_STYLE[cat as AppCategory];
+          {/* Primary category groups */}
+          {primaryGroups.map(({ cat, items }) => {
+            const cfg = CATEGORY_CONFIG[cat];
             return (
               <div key={cat}>
-                <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+                <p className="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+                  <span className={`h-1.5 w-1.5 rounded-full ${cfg?.dot ?? "bg-slate-400"}`} />
                   {cat}
                 </p>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-col gap-0.5">
                   {items.map((app) => (
-                    <div
-                      key={app.id}
-                      className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5"
-                    >
-                      <span
-                        className={`h-1.5 w-1.5 shrink-0 rounded-full ${style.dot}`}
-                      />
-                      <span className="text-xs font-medium text-slate-700">
-                        {app.name}
-                      </span>
-                      {PERF_IMPACT_IDS.has(app.id) && (
-                        <span className="rounded px-1 py-0.5 text-[9px] font-semibold bg-orange-50 text-orange-600 ring-1 ring-orange-200">
-                          perf
-                        </span>
-                      )}
-                    </div>
+                    <AppRow key={app.id} app={app} />
                   ))}
                 </div>
               </div>
             );
           })}
+
+          {/* Other detected apps */}
+          {otherApps.length > 0 && (
+            <div>
+              <p className="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+                Other ({otherApps.length})
+              </p>
+              <div className="flex flex-col gap-0.5">
+                {otherApps.map((app) => (
+                  <AppRow key={app.id} app={app} />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -648,6 +663,87 @@ const METRIC_COLOR: Record<MetricStatus, string> = {
   bad:  "text-red-600",
 };
 
+const CWV_RATING_STYLE: Record<CwvEstimate["rating"], { badge: string; bar: string; label: string }> = {
+  fast:     { badge: "bg-emerald-50 text-emerald-700 ring-emerald-200", bar: "bg-emerald-500", label: "Fast" },
+  moderate: { badge: "bg-amber-50 text-amber-700 ring-amber-200",       bar: "bg-amber-500",   label: "Moderate" },
+  slow:     { badge: "bg-red-50 text-red-700 ring-red-200",             bar: "bg-red-500",     label: "Slow" },
+};
+
+const CWV_METRICS: Array<{
+  key: keyof PerformanceMetrics["cwv"];
+  label: string;
+  description: string;
+  unit: string;
+  max: number;
+  thresholds: [number, number]; // [fast, moderate] boundary values
+}> = [
+  { key: "lcp", label: "LCP", description: "Loading Speed",    unit: "s",  max: 6,   thresholds: [2.5, 4] },
+  { key: "inp", label: "INP", description: "Responsiveness",   unit: "ms", max: 700, thresholds: [200, 500] },
+  { key: "cls", label: "CLS", description: "Visual Stability", unit: "",   max: 0.4, thresholds: [0.1, 0.25] },
+  { key: "fcp", label: "FCP", description: "Initial Render",   unit: "s",  max: 4,   thresholds: [1.8, 3] },
+];
+
+function CwvCell({ metric, config }: {
+  metric: CwvEstimate;
+  config: typeof CWV_METRICS[number];
+}) {
+  const style = CWV_RATING_STYLE[metric.rating];
+  const fillPct = Math.min((metric.value / config.max) * 100, 100);
+  const [fastBound, modBound] = config.thresholds;
+  const fastPct = (fastBound / config.max) * 100;
+  const modPct = (modBound / config.max) * 100;
+
+  const displayVal =
+    config.unit === "ms"
+      ? `${metric.value}ms`
+      : config.unit === "s"
+      ? `${metric.value}s`
+      : metric.value.toFixed(2);
+
+  return (
+    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+      {/* Metric name + badge */}
+      <div className="mb-2 flex items-start justify-between gap-1">
+        <div className="min-w-0">
+          <p className="text-xs font-bold text-slate-800">{config.label}</p>
+          <p className="text-[10px] text-slate-400">{config.description}</p>
+        </div>
+        <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ring-1 ${style.badge}`}>
+          {style.label}
+        </span>
+      </div>
+
+      {/* Value */}
+      <p className="mb-2.5 text-xl font-bold tracking-tight text-slate-900">{displayVal}</p>
+
+      {/* Progress bar with threshold markers */}
+      <div className="relative h-1.5 overflow-hidden rounded-full bg-slate-200">
+        {/* Fill */}
+        <div
+          className={`absolute inset-y-0 left-0 rounded-full ${style.bar}`}
+          style={{ width: `${fillPct}%` }}
+        />
+      </div>
+
+      {/* Threshold labels */}
+      <div className="relative mt-1 h-3 text-[9px]">
+        <span
+          className="absolute -translate-x-1/2 text-emerald-600"
+          style={{ left: `${fastPct}%` }}
+        >
+          {config.unit === "ms" ? `${fastBound}ms` : config.unit === "s" ? `${fastBound}s` : fastBound}
+        </span>
+        <span
+          className="absolute -translate-x-1/2 text-amber-600"
+          style={{ left: `${modPct}%` }}
+        >
+          {config.unit === "ms" ? `${modBound}ms` : config.unit === "s" ? `${modBound}s` : modBound}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function PerformanceCard({ perf }: { perf: PerformanceMetrics }) {
   const scoreBg =
     perf.score >= 80
@@ -656,48 +752,10 @@ function PerformanceCard({ perf }: { perf: PerformanceMetrics }) {
       ? "bg-amber-50 border-amber-200 text-amber-700"
       : "bg-red-50 border-red-200 text-red-700";
 
-  const lazyPct =
-    perf.imageCount > 0
-      ? Math.round((perf.lazyImageCount / perf.imageCount) * 100)
-      : 0;
-
-  const metrics: { label: string; value: string; status: MetricStatus }[] = [
-    {
-      label: "External Scripts",
-      value: String(perf.scriptCount),
-      status: perf.scriptCount > 20 ? "bad" : perf.scriptCount > 10 ? "warn" : "good",
-    },
-    {
-      label: "Render-Blocking",
-      value: String(perf.renderBlockingCount),
-      status: perf.renderBlockingCount > 2 ? "bad" : perf.renderBlockingCount > 0 ? "warn" : "good",
-    },
-    {
-      label: "Stylesheets",
-      value: String(perf.styleSheetCount),
-      status: perf.styleSheetCount > 5 ? "bad" : perf.styleSheetCount > 3 ? "warn" : "good",
-    },
-    {
-      label: "Images",
-      value: String(perf.imageCount),
-      status: "good",
-    },
-    {
-      label: "Lazy Loaded",
-      value: `${lazyPct}%`,
-      status: lazyPct >= 30 ? "good" : lazyPct > 0 ? "warn" : "bad",
-    },
-    {
-      label: "Resource Hints",
-      value: perf.hasResourceHints ? "Yes" : "No",
-      status: perf.hasResourceHints ? "good" : "warn",
-    },
-    {
-      label: "HTML Size",
-      value: `${perf.htmlSizeKb} KB`,
-      status: perf.htmlSizeKb < 150 ? "good" : perf.htmlSizeKb > 500 ? "bad" : "warn",
-    },
-  ];
+  const scriptStatus: MetricStatus = perf.scriptCount > 20 ? "bad" : perf.scriptCount > 10 ? "warn" : "good";
+  const blockStatus: MetricStatus  = perf.renderBlockingCount > 2 ? "bad" : perf.renderBlockingCount > 0 ? "warn" : "good";
+  const cssStatus: MetricStatus    = perf.styleSheetCount > 5 ? "bad" : perf.styleSheetCount > 3 ? "warn" : "good";
+  const htmlStatus: MetricStatus   = perf.htmlSizeKb < 150 ? "good" : perf.htmlSizeKb > 500 ? "bad" : "warn";
 
   return (
     <div className="flex flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -728,50 +786,47 @@ function PerformanceCard({ perf }: { perf: PerformanceMetrics }) {
         </span>
       </div>
 
-      {/* Score ring + top stats */}
-      <div className="mb-4 flex items-center gap-4">
+      {/* Score ring + 4 quick stats */}
+      <div className="mb-5 flex items-center gap-4">
         <ScoreRing score={perf.score} />
-        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
           <span className="text-slate-500">
             Scripts{" "}
-            <span className={`font-semibold ${METRIC_COLOR[metrics[0].status]}`}>
-              {perf.scriptCount}
-            </span>
+            <span className={`font-semibold ${METRIC_COLOR[scriptStatus]}`}>{perf.scriptCount}</span>
           </span>
           <span className="text-slate-500">
             Blocking{" "}
-            <span className={`font-semibold ${METRIC_COLOR[metrics[1].status]}`}>
-              {perf.renderBlockingCount}
-            </span>
+            <span className={`font-semibold ${METRIC_COLOR[blockStatus]}`}>{perf.renderBlockingCount}</span>
           </span>
           <span className="text-slate-500">
             CSS{" "}
-            <span className={`font-semibold ${METRIC_COLOR[metrics[2].status]}`}>
-              {perf.styleSheetCount}
-            </span>
+            <span className={`font-semibold ${METRIC_COLOR[cssStatus]}`}>{perf.styleSheetCount}</span>
           </span>
           <span className="text-slate-500">
             HTML{" "}
-            <span className={`font-semibold ${METRIC_COLOR[metrics[6].status]}`}>
-              {perf.htmlSizeKb}KB
-            </span>
+            <span className={`font-semibold ${METRIC_COLOR[htmlStatus]}`}>{perf.htmlSizeKb}KB</span>
           </span>
         </div>
       </div>
 
-      {/* Full metrics list */}
-      <div className="flex flex-col gap-1">
-        {metrics.map((m) => (
-          <div
-            key={m.label}
-            className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-1.5"
-          >
-            <span className="text-xs text-slate-500">{m.label}</span>
-            <span className={`text-xs font-semibold ${METRIC_COLOR[m.status]}`}>
-              {m.value}
-            </span>
-          </div>
-        ))}
+      {/* Core Web Vitals */}
+      <div className="border-t border-slate-100 pt-4">
+        <div className="mb-3 flex items-center justify-between">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+            Core Web Vitals
+          </p>
+          <span className="text-[10px] text-slate-400">Estimated</span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          {CWV_METRICS.map((cfg) => (
+            <CwvCell key={cfg.key} metric={perf.cwv[cfg.key]} config={cfg} />
+          ))}
+        </div>
+
+        <p className="mt-2.5 text-right text-[10px] text-slate-400">
+          Heuristic estimate · run Lighthouse for real values
+        </p>
       </div>
     </div>
   );
@@ -781,7 +836,7 @@ function PerformanceCard({ perf }: { perf: PerformanceMetrics }) {
 
 export function ScanSkeleton() {
   return (
-    <div className="mt-8 w-full max-w-5xl mx-auto overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <div className="mt-8 w-full max-w-7xl mx-auto overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       {/* Summary bar */}
       <div className="flex items-center gap-4 border-b border-slate-100 px-6 py-4">
         <div className="flex items-center gap-3">
@@ -876,7 +931,7 @@ export function ScanSkeleton() {
 
 export default function ScanResults({ result }: { result: ScanResult }) {
   return (
-    <div className="mt-8 w-full max-w-5xl mx-auto overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg shadow-slate-200/60">
+    <div className="mt-8 w-full max-w-7xl mx-auto overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg shadow-slate-200/60">
       <SummaryBar result={result} />
 
       <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2">

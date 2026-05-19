@@ -65,7 +65,7 @@ export default function ScanForm({
         <div className="relative flex-1">
           <div className="pointer-events-none absolute inset-y-0 left-4 flex items-center">
             <svg
-              className={`h-4 w-4 ${isDark ? "text-slate-500" : "text-indigo-200"}`}
+              className={`h-4 w-4 ${isDark ? "text-slate-400" : "text-indigo-200"}`}
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -87,7 +87,7 @@ export default function ScanForm({
             className={[
               "h-14 w-full rounded-xl pl-11 pr-4 text-sm font-medium transition-all focus:outline-none focus:ring-2 disabled:opacity-60",
               isDark
-                ? "border border-white/10 bg-white/5 text-white placeholder-slate-500 focus:border-transparent focus:ring-indigo-500"
+                ? "border border-slate-200 bg-white text-slate-900 placeholder-slate-400 shadow-sm focus:border-transparent focus:ring-indigo-500"
                 : "border border-white/25 bg-white/15 text-white placeholder-indigo-200 focus:border-transparent focus:ring-white/50",
             ].join(" ")}
           />
@@ -149,9 +149,9 @@ export default function ScanForm({
 
       {/* Error */}
       {showResults && state.status === "error" && (
-        <div className="mt-6 flex max-w-2xl mx-auto items-start gap-3 rounded-xl border border-red-500/20 bg-red-500/10 px-5 py-4">
+        <div className="mt-6 flex max-w-2xl mx-auto items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-5 py-4">
           <svg
-            className="mt-0.5 h-4 w-4 shrink-0 text-red-400"
+            className="mt-0.5 h-4 w-4 shrink-0 text-red-500"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -164,12 +164,12 @@ export default function ScanForm({
             />
           </svg>
           <div>
-            <p className="text-sm font-semibold text-red-400">Scan failed</p>
-            <p className="mt-0.5 text-sm text-red-300/80">{state.message}</p>
+            <p className="text-sm font-semibold text-red-700">Scan failed</p>
+            <p className="mt-0.5 text-sm text-red-600">{state.message}</p>
           </div>
           <button
             onClick={() => setState({ status: "idle" })}
-            className="ml-auto shrink-0 text-xs text-red-400/60 hover:text-red-400"
+            className="ml-auto shrink-0 text-xs text-red-400 hover:text-red-600"
           >
             Dismiss
           </button>
