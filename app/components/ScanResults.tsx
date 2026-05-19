@@ -23,7 +23,8 @@ function ScoreRing({
       : { box: 56, r: 22, sw: 4, font: "text-sm" };
   const circumference = 2 * Math.PI * cfg.r;
   const filled = (score / 100) * circumference;
-  const color = score >= 80 ? "#34d399" : score >= 50 ? "#fbbf24" : "#f87171";
+  // Slightly darker than 400-series so they're readable on white
+  const color = score >= 80 ? "#059669" : score >= 50 ? "#d97706" : "#dc2626";
 
   return (
     <div
@@ -41,7 +42,7 @@ function ScoreRing({
           cy={cfg.box / 2}
           r={cfg.r}
           fill="none"
-          stroke="rgba(255,255,255,0.06)"
+          stroke="#e2e8f0"
           strokeWidth={cfg.sw}
         />
         <circle
@@ -69,21 +70,21 @@ function StatusIcon({
   status: "pass" | "warn" | "fail";
   size?: "sm" | "md";
 }) {
-  const cls = `shrink-0 ${size === "sm" ? "h-3 w-3" : "h-4 w-4"}`;
+  const cls = `shrink-0 ${size === "sm" ? "h-3.5 w-3.5" : "h-4 w-4"}`;
   if (status === "pass")
     return (
-      <svg className={`${cls} text-emerald-400`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+      <svg className={`${cls} text-emerald-500`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     );
   if (status === "warn")
     return (
-      <svg className={`${cls} text-amber-400`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <svg className={`${cls} text-amber-500`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
       </svg>
     );
   return (
-    <svg className={`${cls} text-red-400`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+    <svg className={`${cls} text-red-500`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
     </svg>
   );
@@ -99,9 +100,9 @@ function InfoChip({
   mono?: boolean;
 }) {
   return (
-    <div className="flex items-center gap-1.5 rounded-md border border-white/8 bg-white/4 px-2.5 py-1">
-      <span className="text-[10px] text-slate-500">{label}</span>
-      <span className={`text-xs font-medium text-slate-300 ${mono ? "font-mono" : ""}`}>
+    <div className="flex items-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1">
+      <span className="text-[10px] text-slate-400">{label}</span>
+      <span className={`text-xs font-medium text-slate-700 ${mono ? "font-mono" : ""}`}>
         {value}
       </span>
     </div>
@@ -116,69 +117,69 @@ function SummaryBar({ result }: { result: ScanResult }) {
   );
   const scoreColor =
     overallScore >= 80
-      ? "text-emerald-400"
+      ? "text-emerald-600"
       : overallScore >= 50
-      ? "text-amber-400"
-      : "text-red-400";
+      ? "text-amber-600"
+      : "text-red-600";
 
   return (
-    <div className="flex flex-wrap items-center gap-4 border-b border-white/5 px-6 py-4">
+    <div className="flex flex-wrap items-center gap-4 border-b border-slate-100 px-6 py-4">
       {/* Score */}
       <div className="flex items-center gap-3">
         <ScoreRing score={overallScore} size="sm" />
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
             Overall
           </p>
           <p className={`text-xl font-bold ${scoreColor}`}>
             {overallScore}
-            <span className="text-xs font-normal text-slate-500">/100</span>
+            <span className="text-xs font-normal text-slate-400">/100</span>
           </p>
         </div>
       </div>
 
-      <div className="hidden h-10 w-px bg-white/5 sm:block" />
+      <div className="hidden h-10 w-px bg-slate-200 sm:block" />
 
       {/* Store info */}
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <span
-            className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${
+            className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold ring-1 ${
               result.isShopify
-                ? "bg-emerald-500/15 text-emerald-400"
-                : "bg-slate-700 text-slate-400"
+                ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
+                : "bg-slate-100 text-slate-500 ring-slate-200"
             }`}
           >
             {result.platform}
           </span>
         </div>
-        <p className="mt-1 truncate text-sm font-semibold text-white">
+        <p className="mt-1 truncate text-sm font-semibold text-slate-900">
           {result.pageTitle ?? result.url}
         </p>
-        <p className="truncate text-xs text-slate-500">{result.url}</p>
+        <p className="truncate text-xs text-slate-400">{result.url}</p>
       </div>
 
       {/* Issue counts */}
       <div className="flex shrink-0 flex-col items-end gap-1 text-xs">
         {result.seo.failCount > 0 && (
-          <span className="flex items-center gap-1.5 text-red-400">
-            <span className="h-1.5 w-1.5 rounded-full bg-red-400" />
+          <span className="flex items-center gap-1.5 text-red-600">
+            <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
             {result.seo.failCount} failed
           </span>
         )}
         {result.seo.warnCount > 0 && (
-          <span className="flex items-center gap-1.5 text-amber-400">
-            <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+          <span className="flex items-center gap-1.5 text-amber-600">
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
             {result.seo.warnCount} warnings
           </span>
         )}
         {result.seo.failCount === 0 && result.seo.warnCount === 0 && (
-          <span className="flex items-center gap-1.5 text-emerald-400">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+          <span className="flex items-center gap-1.5 text-emerald-600">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
             All SEO checks passed
           </span>
         )}
-        <p className="text-[10px] text-slate-600">
+        <p className="text-[10px] text-slate-400">
           {new Date(result.scannedAt).toLocaleTimeString("en-US", {
             hour: "2-digit",
             minute: "2-digit",
@@ -204,19 +205,19 @@ function ThemeCard({
     ? "Theme Store"
     : "Custom Theme";
   const badgeColor = theme?.free
-    ? "bg-sky-500/15 text-sky-400"
+    ? "bg-sky-50 text-sky-700 ring-sky-200"
     : theme?.themeStoreId
-    ? "bg-violet-500/15 text-violet-400"
-    : "bg-slate-500/15 text-slate-400";
+    ? "bg-violet-50 text-violet-700 ring-violet-200"
+    : "bg-slate-100 text-slate-600 ring-slate-200";
 
   return (
-    <div className="flex flex-col rounded-xl border border-white/8 bg-white/[0.03] p-5">
+    <div className="flex flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-500/20">
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50">
             <svg
-              className="h-4 w-4 text-indigo-400"
+              className="h-4 w-4 text-indigo-600"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -229,13 +230,13 @@ function ThemeCard({
               />
             </svg>
           </span>
-          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+          <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">
             Theme
           </p>
         </div>
         {theme && (
           <span
-            className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${badgeColor}`}
+            className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold ring-1 ${badgeColor}`}
           >
             {badgeLabel}
           </span>
@@ -244,24 +245,24 @@ function ThemeCard({
 
       {/* Content */}
       {!isShopify ? (
-        <p className="text-sm text-slate-600">Not a Shopify store</p>
+        <p className="text-sm text-slate-400">Not a Shopify store</p>
       ) : !theme ? (
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-slate-400">
           Theme data not exposed in page source
         </p>
       ) : (
         <>
           <div className="mb-3">
             <div className="flex items-baseline gap-2">
-              <p className="text-2xl font-bold text-white">{theme.name}</p>
+              <p className="text-2xl font-bold text-slate-900">{theme.name}</p>
               {theme.confidence === "low" && (
-                <span className="text-[10px] text-amber-500/70">
+                <span className="text-[10px] text-amber-600">
                   low confidence
                 </span>
               )}
             </div>
             {theme.publisher && (
-              <p className="mt-0.5 text-sm text-slate-400">
+              <p className="mt-0.5 text-sm text-slate-500">
                 by {theme.publisher}
               </p>
             )}
@@ -287,7 +288,7 @@ function ThemeCard({
 
           {theme.internalName &&
             theme.internalName.toLowerCase() !== theme.name.toLowerCase() && (
-              <p className="mt-3 truncate text-xs text-slate-600">
+              <p className="mt-3 truncate text-xs text-slate-400">
                 Deployed as:{" "}
                 <span className="font-mono text-slate-500">
                   {theme.internalName}
@@ -303,17 +304,17 @@ function ThemeCard({
 // ─── Apps Card ─────────────────────────────────────────────────────────────────
 
 const CATEGORY_STYLE: Record<AppCategory, { dot: string }> = {
-  "Email & SMS": { dot: "bg-sky-400" },
-  Reviews: { dot: "bg-amber-400" },
-  Loyalty: { dot: "bg-violet-400" },
-  "Live Chat": { dot: "bg-emerald-400" },
-  Search: { dot: "bg-cyan-400" },
-  Analytics: { dot: "bg-orange-400" },
-  Upsell: { dot: "bg-rose-400" },
-  Subscriptions: { dot: "bg-teal-400" },
-  "Social Proof": { dot: "bg-lime-400" },
-  Wishlist: { dot: "bg-pink-400" },
-  Shipping: { dot: "bg-slate-400" },
+  "Email & SMS": { dot: "bg-sky-500" },
+  Reviews:       { dot: "bg-amber-500" },
+  Loyalty:       { dot: "bg-violet-500" },
+  "Live Chat":   { dot: "bg-emerald-500" },
+  Search:        { dot: "bg-cyan-500" },
+  Analytics:     { dot: "bg-orange-500" },
+  Upsell:        { dot: "bg-rose-500" },
+  Subscriptions: { dot: "bg-teal-500" },
+  "Social Proof":{ dot: "bg-lime-500" },
+  Wishlist:      { dot: "bg-pink-500" },
+  Shipping:      { dot: "bg-slate-400" },
 };
 
 const CATEGORY_ORDER: AppCategory[] = [
@@ -367,13 +368,13 @@ function AppsCard({
   );
 
   return (
-    <div className="flex flex-col rounded-xl border border-white/8 bg-white/[0.03] p-5">
+    <div className="flex flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-500/20">
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-50">
             <svg
-              className="h-4 w-4 text-violet-400"
+              className="h-4 w-4 text-violet-600"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -386,15 +387,15 @@ function AppsCard({
               />
             </svg>
           </span>
-          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+          <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">
             Apps
           </p>
         </div>
         <span
-          className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${
+          className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold ring-1 ${
             apps.length > 0
-              ? "bg-violet-500/15 text-violet-300"
-              : "bg-slate-700 text-slate-500"
+              ? "bg-violet-50 text-violet-700 ring-violet-200"
+              : "bg-slate-100 text-slate-500 ring-slate-200"
           }`}
         >
           {apps.length} detected
@@ -402,9 +403,9 @@ function AppsCard({
       </div>
 
       {!isShopify ? (
-        <p className="text-sm text-slate-600">Not a Shopify store</p>
+        <p className="text-sm text-slate-400">Not a Shopify store</p>
       ) : apps.length === 0 ? (
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-slate-400">
           No known third-party apps detected
         </p>
       ) : (
@@ -412,10 +413,10 @@ function AppsCard({
           {overlapWarnings.map((cat) => (
             <div
               key={`overlap-${cat}`}
-              className="flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2"
+              className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2"
             >
               <svg
-                className="h-3.5 w-3.5 shrink-0 text-amber-400"
+                className="h-3.5 w-3.5 shrink-0 text-amber-600"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -427,7 +428,7 @@ function AppsCard({
                   d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
                 />
               </svg>
-              <p className="text-xs text-amber-300">
+              <p className="text-xs font-medium text-amber-700">
                 {grouped[cat]?.length} {cat} apps detected — may conflict
               </p>
             </div>
@@ -437,23 +438,23 @@ function AppsCard({
             const style = CATEGORY_STYLE[cat as AppCategory];
             return (
               <div key={cat}>
-                <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-600">
+                <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
                   {cat}
                 </p>
                 <div className="flex flex-wrap gap-1.5">
                   {items.map((app) => (
                     <div
                       key={app.id}
-                      className="flex items-center gap-1.5 rounded-lg border border-white/6 bg-white/4 px-2.5 py-1.5"
+                      className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5"
                     >
                       <span
                         className={`h-1.5 w-1.5 shrink-0 rounded-full ${style.dot}`}
                       />
-                      <span className="text-xs font-medium text-slate-200">
+                      <span className="text-xs font-medium text-slate-700">
                         {app.name}
                       </span>
                       {PERF_IMPACT_IDS.has(app.id) && (
-                        <span className="rounded px-1 py-0.5 text-[9px] font-semibold bg-orange-500/20 text-orange-400">
+                        <span className="rounded px-1 py-0.5 text-[9px] font-semibold bg-orange-50 text-orange-600 ring-1 ring-orange-200">
                           perf
                         </span>
                       )}
@@ -472,40 +473,24 @@ function AppsCard({
 // ─── SEO Card ──────────────────────────────────────────────────────────────────
 
 const SEO_SEVERITY: Record<string, "critical" | "high" | "medium" | "low"> = {
-  robots: "critical",
-  https: "critical",
-  title: "high",
-  meta_desc: "high",
-  h1: "high",
+  robots:   "critical",
+  https:    "critical",
+  title:    "high",
+  meta_desc:"high",
+  h1:       "high",
   viewport: "high",
-  og: "medium",
-  canonical: "medium",
-  twitter: "low",
-  schema: "low",
-  lang: "low",
+  og:       "medium",
+  canonical:"medium",
+  twitter:  "low",
+  schema:   "low",
+  lang:     "low",
 };
 
 const SEVERITY_CONFIG = {
-  critical: {
-    label: "Critical",
-    color: "text-red-400",
-    dot: "bg-red-400",
-  },
-  high: {
-    label: "High",
-    color: "text-orange-400",
-    dot: "bg-orange-400",
-  },
-  medium: {
-    label: "Medium",
-    color: "text-amber-400",
-    dot: "bg-amber-400",
-  },
-  low: {
-    label: "Low",
-    color: "text-slate-400",
-    dot: "bg-slate-400",
-  },
+  critical: { label: "Critical", color: "text-red-600",    dot: "bg-red-500"    },
+  high:     { label: "High",     color: "text-orange-600", dot: "bg-orange-500" },
+  medium:   { label: "Medium",   color: "text-amber-600",  dot: "bg-amber-500"  },
+  low:      { label: "Low",      color: "text-slate-500",  dot: "bg-slate-400"  },
 } as const;
 
 function SeoCheckRow({ check }: { check: SeoCheck }) {
@@ -516,18 +501,18 @@ function SeoCheckRow({ check }: { check: SeoCheck }) {
   const skip = ["Present", "Enabled", "index, follow"];
 
   return (
-    <div className="flex items-start gap-2 rounded-lg px-3 py-1.5">
+    <div className="flex items-start gap-2 rounded-lg px-3 py-1.5 hover:bg-slate-50">
       <StatusIcon status={check.status} size="sm" />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-baseline gap-x-2">
-          <span className="text-xs font-medium text-slate-200">
+          <span className="text-xs font-medium text-slate-700">
             {check.label}
           </span>
-          <span className="text-[11px] text-slate-500">{check.message}</span>
+          <span className="text-[11px] text-slate-400">{check.message}</span>
         </div>
         {displayValue && !skip.includes(displayValue) && (
           <p
-            className="mt-0.5 truncate font-mono text-[10px] text-slate-600"
+            className="mt-0.5 truncate font-mono text-[10px] text-slate-400"
             title={check.value ?? ""}
           >
             {displayValue}
@@ -541,10 +526,10 @@ function SeoCheckRow({ check }: { check: SeoCheck }) {
 function SeoCard({ seo }: { seo: SeoAudit }) {
   const scoreBg =
     seo.score >= 80
-      ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-300"
+      ? "bg-emerald-50 border-emerald-200 text-emerald-700"
       : seo.score >= 50
-      ? "bg-amber-500/10 border-amber-500/20 text-amber-300"
-      : "bg-red-500/10 border-red-500/20 text-red-300";
+      ? "bg-amber-50 border-amber-200 text-amber-700"
+      : "bg-red-50 border-red-200 text-red-700";
 
   const bySeverity = (["critical", "high", "medium", "low"] as const)
     .map((sev) => ({
@@ -562,13 +547,13 @@ function SeoCard({ seo }: { seo: SeoAudit }) {
     .slice(0, 3);
 
   return (
-    <div className="flex flex-col rounded-xl border border-white/8 bg-white/[0.03] p-5">
+    <div className="flex flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/20">
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50">
             <svg
-              className="h-4 w-4 text-emerald-400"
+              className="h-4 w-4 text-emerald-600"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -581,7 +566,7 @@ function SeoCard({ seo }: { seo: SeoAudit }) {
               />
             </svg>
           </span>
-          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+          <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">
             SEO Audit
           </p>
         </div>
@@ -596,17 +581,17 @@ function SeoCard({ seo }: { seo: SeoAudit }) {
       <div className="mb-4 flex items-center gap-4">
         <ScoreRing score={seo.score} />
         <div className="flex flex-col gap-1 text-xs">
-          <span className="flex items-center gap-1.5 text-emerald-400">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+          <span className="flex items-center gap-1.5 text-emerald-600">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
             {seo.passCount} passed
           </span>
-          <span className="flex items-center gap-1.5 text-amber-400">
-            <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+          <span className="flex items-center gap-1.5 text-amber-600">
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
             {seo.warnCount} warnings
           </span>
           {seo.failCount > 0 && (
-            <span className="flex items-center gap-1.5 text-red-400">
-              <span className="h-1.5 w-1.5 rounded-full bg-red-400" />
+            <span className="flex items-center gap-1.5 text-red-600">
+              <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
               {seo.failCount} failed
             </span>
           )}
@@ -615,18 +600,18 @@ function SeoCard({ seo }: { seo: SeoAudit }) {
 
       {/* Quick wins */}
       {quickWins.length > 0 && (
-        <div className="mb-3 rounded-lg border border-amber-500/15 bg-amber-500/[0.08] p-3">
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-amber-500">
+        <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-amber-700">
             Quick Wins
           </p>
           <div className="space-y-1.5">
             {quickWins.map((c) => (
               <div key={c.id} className="flex items-center gap-2">
                 <StatusIcon status={c.status} size="sm" />
-                <span className="text-xs font-medium text-slate-300">
+                <span className="text-xs font-medium text-slate-700">
                   {c.label}
                 </span>
-                <span className="text-xs text-slate-600">— {c.message}</span>
+                <span className="text-xs text-slate-400">— {c.message}</span>
               </div>
             ))}
           </div>
@@ -641,11 +626,11 @@ function SeoCard({ seo }: { seo: SeoAudit }) {
           return (
             <details key={sev} open={hasIssues}>
               <summary
-                className={`flex cursor-pointer list-none items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition-colors hover:bg-white/5 ${cfg.color}`}
+                className={`flex cursor-pointer list-none items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition-colors hover:bg-slate-50 ${cfg.color}`}
               >
                 <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
                 {cfg.label}
-                <span className="ml-auto text-[10px] font-normal text-slate-600">
+                <span className="ml-auto text-[10px] font-normal text-slate-400">
                   {checks.length} checks
                 </span>
               </summary>
@@ -666,18 +651,18 @@ function SeoCard({ seo }: { seo: SeoAudit }) {
 
 type MetricStatus = "good" | "warn" | "bad";
 const METRIC_COLOR: Record<MetricStatus, string> = {
-  good: "text-emerald-400",
-  warn: "text-amber-400",
-  bad: "text-red-400",
+  good: "text-emerald-600",
+  warn: "text-amber-600",
+  bad:  "text-red-600",
 };
 
 function PerformanceCard({ perf }: { perf: PerformanceMetrics }) {
   const scoreBg =
     perf.score >= 80
-      ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-300"
+      ? "bg-emerald-50 border-emerald-200 text-emerald-700"
       : perf.score >= 50
-      ? "bg-amber-500/10 border-amber-500/20 text-amber-300"
-      : "bg-red-500/10 border-red-500/20 text-red-300";
+      ? "bg-amber-50 border-amber-200 text-amber-700"
+      : "bg-red-50 border-red-200 text-red-700";
 
   const lazyPct =
     perf.imageCount > 0
@@ -688,28 +673,17 @@ function PerformanceCard({ perf }: { perf: PerformanceMetrics }) {
     {
       label: "External Scripts",
       value: String(perf.scriptCount),
-      status:
-        perf.scriptCount > 20 ? "bad" : perf.scriptCount > 10 ? "warn" : "good",
+      status: perf.scriptCount > 20 ? "bad" : perf.scriptCount > 10 ? "warn" : "good",
     },
     {
       label: "Render-Blocking",
       value: String(perf.renderBlockingCount),
-      status:
-        perf.renderBlockingCount > 2
-          ? "bad"
-          : perf.renderBlockingCount > 0
-          ? "warn"
-          : "good",
+      status: perf.renderBlockingCount > 2 ? "bad" : perf.renderBlockingCount > 0 ? "warn" : "good",
     },
     {
       label: "Stylesheets",
       value: String(perf.styleSheetCount),
-      status:
-        perf.styleSheetCount > 5
-          ? "bad"
-          : perf.styleSheetCount > 3
-          ? "warn"
-          : "good",
+      status: perf.styleSheetCount > 5 ? "bad" : perf.styleSheetCount > 3 ? "warn" : "good",
     },
     {
       label: "Images",
@@ -729,19 +703,18 @@ function PerformanceCard({ perf }: { perf: PerformanceMetrics }) {
     {
       label: "HTML Size",
       value: `${perf.htmlSizeKb} KB`,
-      status:
-        perf.htmlSizeKb < 150 ? "good" : perf.htmlSizeKb > 500 ? "bad" : "warn",
+      status: perf.htmlSizeKb < 150 ? "good" : perf.htmlSizeKb > 500 ? "bad" : "warn",
     },
   ];
 
   return (
-    <div className="flex flex-col rounded-xl border border-white/8 bg-white/[0.03] p-5">
+    <div className="flex flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500/20">
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50">
             <svg
-              className="h-4 w-4 text-blue-400"
+              className="h-4 w-4 text-blue-600"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -754,13 +727,11 @@ function PerformanceCard({ perf }: { perf: PerformanceMetrics }) {
               />
             </svg>
           </span>
-          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+          <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">
             Performance
           </p>
         </div>
-        <span
-          className={`rounded-full border px-3 py-0.5 text-xs font-bold ${scoreBg}`}
-        >
+        <span className={`rounded-full border px-3 py-0.5 text-xs font-bold ${scoreBg}`}>
           {perf.score}/100
         </span>
       </div>
@@ -771,33 +742,25 @@ function PerformanceCard({ perf }: { perf: PerformanceMetrics }) {
         <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
           <span className="text-slate-500">
             Scripts{" "}
-            <span
-              className={`font-semibold ${METRIC_COLOR[metrics[0].status]}`}
-            >
+            <span className={`font-semibold ${METRIC_COLOR[metrics[0].status]}`}>
               {perf.scriptCount}
             </span>
           </span>
           <span className="text-slate-500">
             Blocking{" "}
-            <span
-              className={`font-semibold ${METRIC_COLOR[metrics[1].status]}`}
-            >
+            <span className={`font-semibold ${METRIC_COLOR[metrics[1].status]}`}>
               {perf.renderBlockingCount}
             </span>
           </span>
           <span className="text-slate-500">
             CSS{" "}
-            <span
-              className={`font-semibold ${METRIC_COLOR[metrics[2].status]}`}
-            >
+            <span className={`font-semibold ${METRIC_COLOR[metrics[2].status]}`}>
               {perf.styleSheetCount}
             </span>
           </span>
           <span className="text-slate-500">
             HTML{" "}
-            <span
-              className={`font-semibold ${METRIC_COLOR[metrics[6].status]}`}
-            >
+            <span className={`font-semibold ${METRIC_COLOR[metrics[6].status]}`}>
               {perf.htmlSizeKb}KB
             </span>
           </span>
@@ -809,7 +772,7 @@ function PerformanceCard({ perf }: { perf: PerformanceMetrics }) {
         {metrics.map((m) => (
           <div
             key={m.label}
-            className="flex items-center justify-between rounded-lg bg-white/[0.03] px-3 py-1.5"
+            className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-1.5"
           >
             <span className="text-xs text-slate-500">{m.label}</span>
             <span className={`text-xs font-semibold ${METRIC_COLOR[m.status]}`}>
@@ -826,25 +789,25 @@ function PerformanceCard({ perf }: { perf: PerformanceMetrics }) {
 
 export function ScanSkeleton() {
   return (
-    <div className="mt-8 w-full max-w-5xl mx-auto overflow-hidden rounded-2xl border border-white/10 bg-slate-900/80">
+    <div className="mt-8 w-full max-w-5xl mx-auto overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       {/* Summary bar */}
-      <div className="flex items-center gap-4 border-b border-white/5 px-6 py-4">
+      <div className="flex items-center gap-4 border-b border-slate-100 px-6 py-4">
         <div className="flex items-center gap-3">
-          <div className="h-11 w-11 animate-pulse rounded-full bg-white/8" />
+          <div className="h-11 w-11 animate-pulse rounded-full bg-slate-100" />
           <div className="space-y-1.5">
-            <div className="h-2 w-12 animate-pulse rounded bg-white/6" />
-            <div className="h-5 w-16 animate-pulse rounded bg-white/10" />
+            <div className="h-2 w-12 animate-pulse rounded bg-slate-100" />
+            <div className="h-5 w-16 animate-pulse rounded bg-slate-200" />
           </div>
         </div>
-        <div className="hidden h-10 w-px bg-white/5 sm:block" />
+        <div className="hidden h-10 w-px bg-slate-100 sm:block" />
         <div className="flex-1 space-y-2">
-          <div className="h-2.5 w-20 animate-pulse rounded bg-white/8" />
-          <div className="h-4 w-48 animate-pulse rounded bg-white/10" />
-          <div className="h-2.5 w-32 animate-pulse rounded bg-white/5" />
+          <div className="h-2.5 w-20 animate-pulse rounded bg-slate-100" />
+          <div className="h-4 w-48 animate-pulse rounded bg-slate-200" />
+          <div className="h-2.5 w-32 animate-pulse rounded bg-slate-100" />
         </div>
         <div className="space-y-1.5">
-          <div className="h-3 w-20 animate-pulse rounded bg-white/8" />
-          <div className="h-3 w-16 animate-pulse rounded bg-white/5" />
+          <div className="h-3 w-20 animate-pulse rounded bg-slate-100" />
+          <div className="h-3 w-16 animate-pulse rounded bg-slate-100" />
         </div>
       </div>
 
@@ -853,34 +816,34 @@ export function ScanSkeleton() {
         {[0, 1, 2, 3].map((i) => (
           <div
             key={i}
-            className="rounded-xl border border-white/8 bg-white/[0.03] p-5"
+            className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
           >
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="h-7 w-7 animate-pulse rounded-lg bg-white/10" />
-                <div className="h-2.5 w-16 animate-pulse rounded bg-white/8" />
+                <div className="h-7 w-7 animate-pulse rounded-lg bg-slate-100" />
+                <div className="h-2.5 w-16 animate-pulse rounded bg-slate-100" />
               </div>
-              <div className="h-5 w-16 animate-pulse rounded-full bg-white/8" />
+              <div className="h-5 w-16 animate-pulse rounded-full bg-slate-100" />
             </div>
             <div className="space-y-2.5">
-              <div className="h-6 w-32 animate-pulse rounded bg-white/10" />
-              <div className="h-3 w-20 animate-pulse rounded bg-white/6" />
+              <div className="h-6 w-32 animate-pulse rounded bg-slate-200" />
+              <div className="h-3 w-20 animate-pulse rounded bg-slate-100" />
               <div className="mt-3 flex gap-2">
-                <div className="h-6 w-20 animate-pulse rounded-md bg-white/8" />
-                <div className="h-6 w-16 animate-pulse rounded-md bg-white/5" />
+                <div className="h-6 w-20 animate-pulse rounded-md bg-slate-100" />
+                <div className="h-6 w-16 animate-pulse rounded-md bg-slate-100" />
               </div>
               {i >= 2 && (
                 <div className="mt-2 space-y-1.5">
                   {[70, 55, 65, 45].map((w, j) => (
                     <div
                       key={j}
-                      className="flex items-center justify-between rounded-lg bg-white/[0.03] px-3 py-1.5"
+                      className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-1.5"
                     >
                       <div
-                        className="h-2.5 animate-pulse rounded bg-white/8"
+                        className="h-2.5 animate-pulse rounded bg-slate-100"
                         style={{ width: `${w}%` }}
                       />
-                      <div className="h-2.5 w-8 animate-pulse rounded bg-white/6" />
+                      <div className="h-2.5 w-8 animate-pulse rounded bg-slate-100" />
                     </div>
                   ))}
                 </div>
@@ -891,9 +854,9 @@ export function ScanSkeleton() {
       </div>
 
       {/* Footer */}
-      <div className="flex items-center gap-2 border-t border-white/5 bg-white/[0.02] px-6 py-3">
+      <div className="flex items-center gap-2 border-t border-slate-100 bg-slate-50 px-6 py-3">
         <svg
-          className="h-3 w-3 animate-spin text-indigo-400"
+          className="h-3 w-3 animate-spin text-indigo-500"
           fill="none"
           viewBox="0 0 24 24"
         >
@@ -911,7 +874,7 @@ export function ScanSkeleton() {
             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
           />
         </svg>
-        <p className="text-xs text-slate-500">Fetching and analyzing store…</p>
+        <p className="text-xs text-slate-400">Fetching and analyzing store…</p>
       </div>
     </div>
   );
@@ -921,7 +884,7 @@ export function ScanSkeleton() {
 
 export default function ScanResults({ result }: { result: ScanResult }) {
   return (
-    <div className="mt-8 w-full max-w-5xl mx-auto overflow-hidden rounded-2xl border border-white/10 bg-slate-900/80 backdrop-blur-sm shadow-2xl shadow-black/40">
+    <div className="mt-8 w-full max-w-5xl mx-auto overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg shadow-slate-200/60">
       <SummaryBar result={result} />
 
       <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2">
@@ -931,8 +894,8 @@ export default function ScanResults({ result }: { result: ScanResult }) {
         <PerformanceCard perf={result.performance} />
       </div>
 
-      <div className="border-t border-white/5 bg-white/[0.02] px-6 py-3">
-        <p className="text-xs text-slate-600">
+      <div className="border-t border-slate-100 bg-slate-50 px-6 py-3">
+        <p className="text-xs text-slate-400">
           Scanned at{" "}
           {new Date(result.scannedAt).toLocaleTimeString("en-US", {
             hour: "2-digit",
