@@ -1,13 +1,13 @@
 import type {
   AppCategory,
-  CwvEstimate,
   DetectedApp,
-  PerformanceMetrics,
   ScanResult,
   SeoAudit,
   SeoCheck,
   ThemeInfo,
 } from "@/app/lib/shopify-detector";
+import DownloadReportButton from "@/app/components/DownloadReportButton";
+import PerformanceCard from "@/app/components/PerformanceCard";
 
 // ─── Shared helpers ────────────────────────────────────────────────────────────
 
@@ -140,6 +140,9 @@ function SummaryBar({ result }: { result: ScanResult }) {
         </p>
         <p className="truncate text-xs text-slate-400">{result.url}</p>
       </div>
+
+      {/* Download button */}
+      <DownloadReportButton result={result} />
 
       {/* Issue counts */}
       <div className="flex shrink-0 flex-col items-end gap-1 text-xs">
@@ -654,183 +657,7 @@ function SeoCard({ seo }: { seo: SeoAudit }) {
   );
 }
 
-// ─── Performance Card ──────────────────────────────────────────────────────────
-
-type MetricStatus = "good" | "warn" | "bad";
-const METRIC_COLOR: Record<MetricStatus, string> = {
-  good: "text-emerald-600",
-  warn: "text-amber-600",
-  bad:  "text-red-600",
-};
-
-const CWV_RATING_STYLE: Record<CwvEstimate["rating"], { badge: string; bar: string; label: string }> = {
-  fast:     { badge: "bg-emerald-50 text-emerald-700 ring-emerald-200", bar: "bg-emerald-500", label: "Fast" },
-  moderate: { badge: "bg-amber-50 text-amber-700 ring-amber-200",       bar: "bg-amber-500",   label: "Moderate" },
-  slow:     { badge: "bg-red-50 text-red-700 ring-red-200",             bar: "bg-red-500",     label: "Slow" },
-};
-
-const CWV_METRICS: Array<{
-  key: keyof PerformanceMetrics["cwv"];
-  label: string;
-  description: string;
-  unit: string;
-  max: number;
-  thresholds: [number, number]; // [fast, moderate] boundary values
-}> = [
-  { key: "lcp", label: "LCP", description: "Loading Speed",    unit: "s",  max: 6,   thresholds: [2.5, 4] },
-  { key: "inp", label: "INP", description: "Responsiveness",   unit: "ms", max: 700, thresholds: [200, 500] },
-  { key: "cls", label: "CLS", description: "Visual Stability", unit: "",   max: 0.4, thresholds: [0.1, 0.25] },
-  { key: "fcp", label: "FCP", description: "Initial Render",   unit: "s",  max: 4,   thresholds: [1.8, 3] },
-];
-
-function CwvCell({ metric, config }: {
-  metric: CwvEstimate;
-  config: typeof CWV_METRICS[number];
-}) {
-  const style = CWV_RATING_STYLE[metric.rating];
-  const fillPct = Math.min((metric.value / config.max) * 100, 100);
-  const [fastBound, modBound] = config.thresholds;
-  const fastPct = (fastBound / config.max) * 100;
-  const modPct = (modBound / config.max) * 100;
-
-  const displayVal =
-    config.unit === "ms"
-      ? `${metric.value}ms`
-      : config.unit === "s"
-      ? `${metric.value}s`
-      : metric.value.toFixed(2);
-
-  return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-      {/* Metric name + badge */}
-      <div className="mb-2 flex items-start justify-between gap-1">
-        <div className="min-w-0">
-          <p className="text-xs font-bold text-slate-800">{config.label}</p>
-          <p className="text-[10px] text-slate-400">{config.description}</p>
-        </div>
-        <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ring-1 ${style.badge}`}>
-          {style.label}
-        </span>
-      </div>
-
-      {/* Value */}
-      <p className="mb-2.5 text-xl font-bold tracking-tight text-slate-900">{displayVal}</p>
-
-      {/* Progress bar with threshold markers */}
-      <div className="relative h-1.5 overflow-hidden rounded-full bg-slate-200">
-        {/* Fill */}
-        <div
-          className={`absolute inset-y-0 left-0 rounded-full ${style.bar}`}
-          style={{ width: `${fillPct}%` }}
-        />
-      </div>
-
-      {/* Threshold labels */}
-      <div className="relative mt-1 h-3 text-[9px]">
-        <span
-          className="absolute -translate-x-1/2 text-emerald-600"
-          style={{ left: `${fastPct}%` }}
-        >
-          {config.unit === "ms" ? `${fastBound}ms` : config.unit === "s" ? `${fastBound}s` : fastBound}
-        </span>
-        <span
-          className="absolute -translate-x-1/2 text-amber-600"
-          style={{ left: `${modPct}%` }}
-        >
-          {config.unit === "ms" ? `${modBound}ms` : config.unit === "s" ? `${modBound}s` : modBound}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function PerformanceCard({ perf }: { perf: PerformanceMetrics }) {
-  const scoreBg =
-    perf.score >= 80
-      ? "bg-emerald-50 border-emerald-200 text-emerald-700"
-      : perf.score >= 50
-      ? "bg-amber-50 border-amber-200 text-amber-700"
-      : "bg-red-50 border-red-200 text-red-700";
-
-  const scriptStatus: MetricStatus = perf.scriptCount > 20 ? "bad" : perf.scriptCount > 10 ? "warn" : "good";
-  const blockStatus: MetricStatus  = perf.renderBlockingCount > 2 ? "bad" : perf.renderBlockingCount > 0 ? "warn" : "good";
-  const cssStatus: MetricStatus    = perf.styleSheetCount > 5 ? "bad" : perf.styleSheetCount > 3 ? "warn" : "good";
-  const htmlStatus: MetricStatus   = perf.htmlSizeKb < 150 ? "good" : perf.htmlSizeKb > 500 ? "bad" : "warn";
-
-  return (
-    <div className="flex flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      {/* Header */}
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50">
-            <svg
-              className="h-4 w-4 text-blue-600"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"
-              />
-            </svg>
-          </span>
-          <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-            Performance
-          </p>
-        </div>
-        <span className={`rounded-full border px-3 py-0.5 text-xs font-bold ${scoreBg}`}>
-          {perf.score}/100
-        </span>
-      </div>
-
-      {/* Score ring + 4 quick stats */}
-      <div className="mb-5 flex items-center gap-4">
-        <ScoreRing score={perf.score} />
-        <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
-          <span className="text-slate-500">
-            Scripts{" "}
-            <span className={`font-semibold ${METRIC_COLOR[scriptStatus]}`}>{perf.scriptCount}</span>
-          </span>
-          <span className="text-slate-500">
-            Blocking{" "}
-            <span className={`font-semibold ${METRIC_COLOR[blockStatus]}`}>{perf.renderBlockingCount}</span>
-          </span>
-          <span className="text-slate-500">
-            CSS{" "}
-            <span className={`font-semibold ${METRIC_COLOR[cssStatus]}`}>{perf.styleSheetCount}</span>
-          </span>
-          <span className="text-slate-500">
-            HTML{" "}
-            <span className={`font-semibold ${METRIC_COLOR[htmlStatus]}`}>{perf.htmlSizeKb}KB</span>
-          </span>
-        </div>
-      </div>
-
-      {/* Core Web Vitals */}
-      <div className="border-t border-slate-100 pt-4">
-        <div className="mb-3 flex items-center justify-between">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
-            Core Web Vitals
-          </p>
-          <span className="text-[10px] text-slate-400">Estimated</span>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2">
-          {CWV_METRICS.map((cfg) => (
-            <CwvCell key={cfg.key} metric={perf.cwv[cfg.key]} config={cfg} />
-          ))}
-        </div>
-
-        <p className="mt-2.5 text-right text-[10px] text-slate-400">
-          Heuristic estimate · run Lighthouse for real values
-        </p>
-      </div>
-    </div>
-  );
-}
+// PerformanceCard is a "use client" component — imported from its own file.
 
 // ─── Skeleton ──────────────────────────────────────────────────────────────────
 

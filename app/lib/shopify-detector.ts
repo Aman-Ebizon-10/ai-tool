@@ -79,8 +79,17 @@ export interface CwvEstimate {
   rating: "fast" | "moderate" | "slow";
 }
 
-export interface PerformanceMetrics {
+export interface PerformanceViewMetrics {
   score: number;
+  cwv: {
+    lcp: CwvEstimate;
+    fcp: CwvEstimate;
+    inp: CwvEstimate;
+    cls: CwvEstimate;
+  };
+}
+
+export interface PerformanceMetrics {
   scriptCount: number;
   styleSheetCount: number;
   imageCount: number;
@@ -88,13 +97,10 @@ export interface PerformanceMetrics {
   renderBlockingCount: number;
   hasResourceHints: boolean;
   htmlSizeKb: number;
-  /** Heuristic estimates derived from static HTML signals — not real field data */
-  cwv: {
-    lcp: CwvEstimate; // seconds
-    fcp: CwvEstimate; // seconds
-    inp: CwvEstimate; // milliseconds
-    cls: CwvEstimate; // unitless
-  };
+  mobile: PerformanceViewMetrics;
+  desktop: PerformanceViewMetrics;
+  score: number;
+  cwv: PerformanceViewMetrics["cwv"];
 }
 
 export interface ScanResult {
@@ -560,53 +566,73 @@ function analyzePerformance(html: string): PerformanceMetrics {
   const hasResourceHints = /<link[^>]+rel=["'](preload|prefetch|preconnect|dns-prefetch)["']/i.test(html);
   const htmlSizeKb = Math.round(html.length / 1024);
 
-  let score = 100;
-  score -= Math.min(scriptCount * 2, 30);
-  score -= Math.min(renderBlockingCount * 8, 25);
-  score -= Math.min(styleSheetCount * 2, 15);
+  // ── Desktop score ─────────────────────────────────────────────────────────
+  let desktopScore = 100;
+  desktopScore -= Math.min(scriptCount * 2, 30);
+  desktopScore -= Math.min(renderBlockingCount * 8, 25);
+  desktopScore -= Math.min(styleSheetCount * 2, 15);
   if (imageCount > 0) {
-    if (lazyImageCount / imageCount >= 0.3) score += 5;
-    else score -= 5;
+    if (lazyImageCount / imageCount >= 0.3) desktopScore += 5;
+    else desktopScore -= 5;
   }
-  if (hasResourceHints) score += 5;
-  if (htmlSizeKb < 150) score += 5;
-  else if (htmlSizeKb > 500) score -= 10;
+  if (hasResourceHints) desktopScore += 5;
+  if (htmlSizeKb < 150) desktopScore += 5;
+  else if (htmlSizeKb > 500) desktopScore -= 10;
+  desktopScore = Math.max(0, Math.min(100, Math.round(desktopScore)));
 
-  // ── Core Web Vitals heuristic estimates ────────────────────────────────────
-  // Derived from static HTML signals; not real field data.
   const lazyPct = imageCount > 0 ? lazyImageCount / imageCount : 1;
-
-  // LCP (Largest Contentful Paint) — thresholds: <2.5s fast, 2.5–4s moderate, >4s slow
-  let lcpVal = 1.2;
-  lcpVal += Math.min(renderBlockingCount * 0.55, 2.5);
-  lcpVal += htmlSizeKb > 600 ? 0.6 : htmlSizeKb > 300 ? 0.3 : 0;
-  if (!hasResourceHints) lcpVal += 0.2;
-  if (imageCount > 5 && lazyPct < 0.2) lcpVal += 0.3;
-  lcpVal = Math.max(0.5, Math.round(lcpVal * 10) / 10);
-
-  // FCP (First Contentful Paint) — thresholds: <1.8s fast, 1.8–3s moderate, >3s slow
-  let fcpVal = 0.7;
-  fcpVal += Math.min(renderBlockingCount * 0.45, 1.8);
-  fcpVal += htmlSizeKb > 500 ? 0.3 : htmlSizeKb > 250 ? 0.15 : 0;
-  if (hasResourceHints) fcpVal -= 0.15;
-  fcpVal = Math.max(0.3, Math.round(fcpVal * 10) / 10);
-
-  // INP (Interaction to Next Paint) — thresholds: <200ms fast, 200–500ms moderate, >500ms slow
-  const inpVal = Math.round(
-    Math.min(80 + scriptCount * 5 + renderBlockingCount * 20, 700) / 10
-  ) * 10;
-
-  // CLS (Cumulative Layout Shift) — thresholds: <0.1 fast, 0.1–0.25 moderate, >0.25 slow
-  let clsVal = 0.04;
-  if (imageCount > 0) clsVal += (1 - lazyPct) * 0.22;
-  clsVal = Math.max(0, Math.round(clsVal * 100) / 100);
 
   function cwvRating(val: number, fastThresh: number, moderateThresh: number): "fast" | "moderate" | "slow" {
     return val < fastThresh ? "fast" : val < moderateThresh ? "moderate" : "slow";
   }
 
+  // ── Desktop CWV ────────────────────────────────────────────────────────────
+  let lcpD = 1.2;
+  lcpD += Math.min(renderBlockingCount * 0.55, 2.5);
+  lcpD += htmlSizeKb > 600 ? 0.6 : htmlSizeKb > 300 ? 0.3 : 0;
+  if (!hasResourceHints) lcpD += 0.2;
+  if (imageCount > 5 && lazyPct < 0.2) lcpD += 0.3;
+  lcpD = Math.max(0.5, Math.round(lcpD * 10) / 10);
+
+  let fcpD = 0.7;
+  fcpD += Math.min(renderBlockingCount * 0.45, 1.8);
+  fcpD += htmlSizeKb > 500 ? 0.3 : htmlSizeKb > 250 ? 0.15 : 0;
+  if (hasResourceHints) fcpD -= 0.15;
+  fcpD = Math.max(0.3, Math.round(fcpD * 10) / 10);
+
+  const inpD = Math.round(
+    Math.min(80 + scriptCount * 5 + renderBlockingCount * 20, 700) / 10
+  ) * 10;
+
+  let clsD = 0.04;
+  if (imageCount > 0) clsD += (1 - lazyPct) * 0.22;
+  clsD = Math.max(0, Math.round(clsD * 100) / 100);
+
+  // ── Mobile CWV (4G / mid-tier CPU — typically 1.5–1.8× slower than desktop) ─
+  const lcpM = Math.max(0.5, Math.round(lcpD * 1.55 * 10) / 10);
+  const fcpM = Math.max(0.3, Math.round(fcpD * 1.5 * 10) / 10);
+  const inpM = Math.round(Math.min(inpD * 1.75, 1000) / 10) * 10;
+  const clsM = Math.max(0, Math.round(clsD * 1.1 * 100) / 100);
+
+  // Mobile score is lower due to CPU/network constraints
+  const mobilePenalty = 10 + Math.min(renderBlockingCount * 2, 10) + (scriptCount > 15 ? 5 : 0);
+  const mobileScore = Math.max(0, Math.min(100, desktopScore - mobilePenalty));
+
+  const desktopCwv = {
+    lcp: { value: lcpD, rating: cwvRating(lcpD, 2.5, 4) },
+    fcp: { value: fcpD, rating: cwvRating(fcpD, 1.8, 3) },
+    inp: { value: inpD, rating: cwvRating(inpD, 200, 500) },
+    cls: { value: clsD, rating: cwvRating(clsD, 0.1, 0.25) },
+  } as const;
+
+  const mobileCwv = {
+    lcp: { value: lcpM, rating: cwvRating(lcpM, 2.5, 4) },
+    fcp: { value: fcpM, rating: cwvRating(fcpM, 1.8, 3) },
+    inp: { value: inpM, rating: cwvRating(inpM, 200, 500) },
+    cls: { value: clsM, rating: cwvRating(clsM, 0.1, 0.25) },
+  } as const;
+
   return {
-    score: Math.max(0, Math.min(100, Math.round(score))),
     scriptCount,
     styleSheetCount,
     imageCount,
@@ -614,12 +640,10 @@ function analyzePerformance(html: string): PerformanceMetrics {
     renderBlockingCount,
     hasResourceHints,
     htmlSizeKb,
-    cwv: {
-      lcp: { value: lcpVal, rating: cwvRating(lcpVal, 2.5, 4) },
-      fcp: { value: fcpVal, rating: cwvRating(fcpVal, 1.8, 3) },
-      inp: { value: inpVal, rating: cwvRating(inpVal, 200, 500) },
-      cls: { value: clsVal, rating: cwvRating(clsVal, 0.1, 0.25) },
-    },
+    desktop: { score: desktopScore, cwv: desktopCwv },
+    mobile:  { score: mobileScore,  cwv: mobileCwv  },
+    score: desktopScore,
+    cwv: desktopCwv,
   };
 }
 

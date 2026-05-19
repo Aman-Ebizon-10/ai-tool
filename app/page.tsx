@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import ScanForm from "@/app/components/ScanForm";
+import ScanPageClient from "@/app/components/ScanPageClient";
 
 export const metadata: Metadata = {
   title: "ShopAudit — Complete Shopify Store Analysis",
@@ -162,12 +162,8 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Form + results — expands with the 7xl outer wrapper */}
-          <ScanForm variant="dark" />
-
-          <p className="mt-5 text-center text-sm text-slate-400">
-            No account needed &nbsp;·&nbsp; 100% free &nbsp;·&nbsp; Results in under 30 seconds
-          </p>
+          {/* Form, history panel, and results */}
+          <ScanPageClient />
         </div>
       </section>
 

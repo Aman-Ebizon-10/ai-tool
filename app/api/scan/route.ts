@@ -1,4 +1,8 @@
 import { analyzeHtml } from "@/app/lib/shopify-detector";
+import { fetchPageSpeedView } from "@/app/lib/pagespeed";
+
+// Increase Vercel function timeout so PSI calls can complete (Pro plan: up to 60s)
+export const maxDuration = 30;
 
 const BLOCKED_HOSTS =
   /^(localhost|127\.|10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|::1|0\.0\.0\.0)/i;
@@ -11,7 +15,7 @@ function normalizeUrl(raw: string): string {
 }
 
 export async function POST(request: Request) {
-  // Parse body
+  // ── Parse body ──────────────────────────────────────────────────────────────
   let rawUrl: string;
   try {
     const body = await request.json();
@@ -24,7 +28,7 @@ export async function POST(request: Request) {
     return Response.json({ error: "URL is required" }, { status: 400 });
   }
 
-  // Parse and validate URL
+  // ── Parse and validate URL ──────────────────────────────────────────────────
   let target: URL;
   try {
     target = new URL(normalizeUrl(rawUrl));
@@ -43,7 +47,13 @@ export async function POST(request: Request) {
     return Response.json({ error: "URL is not allowed" }, { status: 403 });
   }
 
-  // Fetch the page
+  // ── Fire PageSpeed calls immediately — they run while the HTML is fetched ──
+  // Both strategies run in parallel. Promise.allSettled means a PSI failure
+  // never blocks the main scan — we fall back to heuristic estimates instead.
+  const psiMobilePromise  = fetchPageSpeedView(target.toString(), "mobile");
+  const psiDesktopPromise = fetchPageSpeedView(target.toString(), "desktop");
+
+  // ── Fetch the store HTML ────────────────────────────────────────────────────
   let response: Response;
   try {
     response = await fetch(target.toString(), {
@@ -70,7 +80,7 @@ export async function POST(request: Request) {
     );
   }
 
-  // Validate content type
+  // ── Validate response ───────────────────────────────────────────────────────
   const contentType = response.headers.get("content-type") ?? "";
   if (!response.ok) {
     return Response.json(
@@ -85,7 +95,7 @@ export async function POST(request: Request) {
     );
   }
 
-  // Read body, capped at MAX_BODY_BYTES
+  // ── Read body (capped at 1 MB) ──────────────────────────────────────────────
   let html: string;
   try {
     const buffer = await response.arrayBuffer();
@@ -101,6 +111,30 @@ export async function POST(request: Request) {
     );
   }
 
+  // ── HTML analysis (heuristic performance used as fallback) ──────────────────
   const result = analyzeHtml(html, target.hostname, target.protocol === "https:");
+
+  // ── Await PSI results — likely already done by now ─────────────────────────
+  const [mobileRes, desktopRes] = await Promise.allSettled([
+    psiMobilePromise,
+    psiDesktopPromise,
+  ]);
+
+  if (mobileRes.status === "fulfilled" && desktopRes.status === "fulfilled") {
+    // Both strategies succeeded — replace heuristic estimates with real data
+    const desktop = desktopRes.value;
+    result.performance = {
+      // Preserve HTML-derived technical signals (scripts, CSS, images, etc.)
+      ...result.performance,
+      // Override with authoritative PageSpeed data
+      mobile:  mobileRes.value,
+      desktop: desktopRes.value,
+      score:   desktop.score,
+      cwv:     desktop.cwv,
+    };
+  }
+  // If either PSI call failed (rate-limited, no key, timeout), the heuristic
+  // performance data from analyzeHtml is used transparently — no error thrown.
+
   return Response.json(result);
 }
