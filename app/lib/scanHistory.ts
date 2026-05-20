@@ -26,7 +26,9 @@ export function saveToHistory(result: ScanResult): HistoryEntry[] {
     id: result.scannedAt,
     url: result.url,
     pageTitle: result.pageTitle,
-    overallScore: Math.round((result.seo.score + result.performance.score) / 2),
+    overallScore: result.performance.score !== null
+      ? Math.round((result.seo.score + result.performance.score) / 2)
+      : result.seo.score,
     result,
   };
   // Deduplicate by URL — newest scan for a URL wins

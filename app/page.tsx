@@ -142,9 +142,9 @@ export default function Home() {
       {/* ── Hero ── */}
       <section id="scan" className="bg-white pb-28 pt-36">
         {/* Outer wrapper expands to 7xl so results card has room */}
-        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 scan-root-container">
           {/* Hero text — keep centered and narrow */}
-          <div className="mx-auto max-w-4xl text-center">
+          <div className="mx-auto max-w-4xl text-center hero-headline">
             <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-4 py-1.5 text-sm font-medium text-indigo-600">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-indigo-500" />
               Free Shopify Store Analyzer
@@ -168,7 +168,7 @@ export default function Home() {
       </section>
 
       {/* ── Stats bar ── */}
-      <div className="border-y border-slate-100 bg-slate-50">
+      <div className="border-y border-slate-100 bg-slate-50 marketing-section">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <dl className="grid grid-cols-2 divide-x divide-slate-100 md:grid-cols-4">
             {stats.map((s) => (
@@ -182,7 +182,7 @@ export default function Home() {
       </div>
 
       {/* ── Audit modules ── */}
-      <section id="features" className="py-24 bg-white">
+      <section id="features" className="py-24 bg-white marketing-section">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-16 text-center">
             <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-indigo-600">
@@ -233,7 +233,7 @@ export default function Home() {
       </section>
 
       {/* ── How it works ── */}
-      <section id="how-it-works" className="border-y border-slate-100 bg-slate-50 py-24">
+      <section id="how-it-works" className="border-y border-slate-100 bg-slate-50 py-24 marketing-section">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <div className="mb-16 text-center">
             <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-indigo-600">
@@ -265,7 +265,7 @@ export default function Home() {
       </section>
 
       {/* ── CTA ── */}
-      <section className="relative overflow-hidden py-24" style={{ background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)" }}>
+      <section className="relative overflow-hidden py-24 marketing-section" style={{ background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)" }}>
         <div
           className="pointer-events-none absolute inset-0 opacity-10"
           style={{
@@ -303,7 +303,7 @@ export default function Home() {
       </section>
 
       {/* ── Footer ── */}
-      <footer className="border-t border-white/5 bg-slate-950 py-12">
+      <footer className="border-t border-white/5 bg-slate-950 py-12 marketing-section">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
             <div className="flex items-center gap-2.5">

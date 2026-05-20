@@ -6,6 +6,7 @@ interface ScanFormProps {
   onSubmit: (e: React.FormEvent) => void;
   isLoading: boolean;
   variant?: "dark" | "light";
+  auditMode?: boolean;
 }
 
 export default function ScanForm({
@@ -14,19 +15,26 @@ export default function ScanForm({
   onSubmit,
   isLoading,
   variant = "dark",
+  auditMode = false,
 }: ScanFormProps) {
   const isDark = variant === "dark";
 
   return (
     <form
       onSubmit={onSubmit}
-      className="flex w-full max-w-2xl flex-col gap-3 mx-auto sm:flex-row"
+      className={[
+        "flex w-full flex-col gap-3 sm:flex-row",
+        auditMode ? "" : "max-w-2xl mx-auto",
+      ].join(" ")}
     >
       {/* URL input */}
       <div className="relative flex-1">
         <div className="pointer-events-none absolute inset-y-0 left-4 flex items-center">
           <svg
-            className={`h-4 w-4 ${isDark ? "text-slate-400" : "text-indigo-200"}`}
+            className={[
+              isDark ? "text-slate-400" : "text-indigo-200",
+              auditMode ? "h-5 w-5" : "h-4 w-4",
+            ].join(" ")}
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -46,7 +54,8 @@ export default function ScanForm({
           placeholder="https://your-store.myshopify.com"
           disabled={isLoading}
           className={[
-            "h-14 w-full rounded-xl pl-11 pr-4 text-sm font-medium transition-all focus:outline-none focus:ring-2 disabled:opacity-60",
+            "w-full rounded-xl transition-all focus:outline-none focus:ring-2 disabled:opacity-60",
+            auditMode ? "h-[62px] pl-12 pr-5 text-base font-medium" : "h-14 pl-11 pr-4 text-sm font-medium",
             isDark
               ? "border border-slate-200 bg-white text-slate-900 placeholder-slate-400 shadow-sm focus:border-transparent focus:ring-indigo-500"
               : "border border-white/25 bg-white/15 text-white placeholder-indigo-200 focus:border-transparent focus:ring-white/50",
@@ -59,7 +68,8 @@ export default function ScanForm({
         type="submit"
         disabled={isLoading || !url.trim()}
         className={[
-          "flex h-14 shrink-0 items-center justify-center gap-2 rounded-xl px-7 text-sm font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-60",
+          "flex shrink-0 items-center justify-center gap-2 rounded-xl font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-60",
+          auditMode ? "h-[62px] px-10 text-base" : "h-14 px-7 text-sm",
           isDark
             ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/25 hover:bg-indigo-400"
             : "bg-white text-indigo-600 shadow-lg shadow-black/10 hover:bg-indigo-50",
@@ -67,27 +77,16 @@ export default function ScanForm({
       >
         {isLoading ? (
           <>
-            <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-              />
+            <svg className={auditMode ? "h-5 w-5 animate-spin" : "h-4 w-4 animate-spin"} fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
             Scanning…
           </>
         ) : (
           <>
             <svg
-              className="h-4 w-4"
+              className={auditMode ? "h-5 w-5" : "h-4 w-4"}
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"

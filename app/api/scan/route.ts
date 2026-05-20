@@ -1,8 +1,6 @@
 import { analyzeHtml } from "@/app/lib/shopify-detector";
-import { fetchPageSpeedView } from "@/app/lib/pagespeed";
 
-// Increase Vercel function timeout so PSI calls can complete (Pro plan: up to 60s)
-export const maxDuration = 30;
+export const maxDuration = 15;
 
 const BLOCKED_HOSTS =
   /^(localhost|127\.|10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|::1|0\.0\.0\.0)/i;
@@ -46,12 +44,6 @@ export async function POST(request: Request) {
   if (BLOCKED_HOSTS.test(target.hostname)) {
     return Response.json({ error: "URL is not allowed" }, { status: 403 });
   }
-
-  // ── Fire PageSpeed calls immediately — they run while the HTML is fetched ──
-  // Both strategies run in parallel. Promise.allSettled means a PSI failure
-  // never blocks the main scan — we fall back to heuristic estimates instead.
-  const psiMobilePromise  = fetchPageSpeedView(target.toString(), "mobile");
-  const psiDesktopPromise = fetchPageSpeedView(target.toString(), "desktop");
 
   // ── Fetch the store HTML ────────────────────────────────────────────────────
   let response: Response;
@@ -111,30 +103,9 @@ export async function POST(request: Request) {
     );
   }
 
-  // ── HTML analysis (heuristic performance used as fallback) ──────────────────
+  // ── HTML analysis — returns heuristic performance estimates ─────────────────
+  // Real PageSpeed data is fetched separately by the client via /api/pagespeed
+  // so the scan result appears immediately without waiting for PSI.
   const result = analyzeHtml(html, target.hostname, target.protocol === "https:");
-
-  // ── Await PSI results — likely already done by now ─────────────────────────
-  const [mobileRes, desktopRes] = await Promise.allSettled([
-    psiMobilePromise,
-    psiDesktopPromise,
-  ]);
-
-  if (mobileRes.status === "fulfilled" && desktopRes.status === "fulfilled") {
-    // Both strategies succeeded — replace heuristic estimates with real data
-    const desktop = desktopRes.value;
-    result.performance = {
-      // Preserve HTML-derived technical signals (scripts, CSS, images, etc.)
-      ...result.performance,
-      // Override with authoritative PageSpeed data
-      mobile:  mobileRes.value,
-      desktop: desktopRes.value,
-      score:   desktop.score,
-      cwv:     desktop.cwv,
-    };
-  }
-  // If either PSI call failed (rate-limited, no key, timeout), the heuristic
-  // performance data from analyzeHtml is used transparently — no error thrown.
-
   return Response.json(result);
 }

@@ -24,3 +24,31 @@ body {
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
+
+/* ── Audit workspace mode ────────────────────────────────────────────────────── */
+/* Triggered by data-audit-mode="true" on <html> when scan results are present   */
+
+html[data-audit-mode] .marketing-section {
+  display: none !important;
+}
+
+html[data-audit-mode] .hero-headline {
+  display: none !important;
+}
+
+html[data-audit-mode] #scan {
+  padding-top: 4.75rem !important;
+  padding-bottom: 1.5rem !important;
+  background: #F7F8FA !important;
+  min-height: 100vh !important;
+}
+
+html[data-audit-mode] .scan-root-container {
+  max-width: 1600px !important;
+  padding-left: 1.5rem !important;
+  padding-right: 1.5rem !important;
+}
+
+html[data-audit-mode] #scan-results {
+  max-width: none !important;
+}

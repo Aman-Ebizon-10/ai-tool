@@ -104,7 +104,9 @@ function buildCoverPage(doc: jsPDF, result: ScanResult) {
   doc.text(`Scanned: ${scanned}`, PAGE_W / 2, 48, { align: "center" });
 
   // Score boxes
-  const overallScore = Math.round((result.seo.score + result.performance.score) / 2);
+  const overallScore = result.performance.score !== null
+    ? Math.round((result.seo.score + result.performance.score) / 2)
+    : result.seo.score;
   const bw = 46;
   const bh = 28;
   const by = 66;
@@ -113,8 +115,8 @@ function buildCoverPage(doc: jsPDF, result: ScanResult) {
   const bx = (PAGE_W - totalW) / 2;
 
   scoreBox(doc, bx,           by, bw, bh, "Overall Score", overallScore,           scoreColor(overallScore));
-  scoreBox(doc, bx + bw + gap,       by, bw, bh, "SEO Score",     result.seo.score,        scoreColor(result.seo.score));
-  scoreBox(doc, bx + (bw + gap) * 2, by, bw, bh, "Perf Score",    result.performance.score, scoreColor(result.performance.score));
+  scoreBox(doc, bx + bw + gap,       by, bw, bh, "SEO Score",  result.seo.score,                     scoreColor(result.seo.score));
+  scoreBox(doc, bx + (bw + gap) * 2, by, bw, bh, "Perf Score", result.performance.score ?? 0, scoreColor(result.performance.score ?? 0));
 
   let y = 104;
 
@@ -146,12 +148,12 @@ function buildCoverPage(doc: jsPDF, result: ScanResult) {
 
   y = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;
 
-  // SEO quick-win summary
-  const quickWins = result.seo.checks.filter(
-    (c) => c.status !== "pass" && (c.id === "title" || c.id === "meta_desc" || c.id === "h1" || c.id === "robots" || c.id === "https")
-  );
+  // SEO top issues for cover page
+  const topIssues = result.seo.checks.filter(
+    (c) => c.status !== "pass" && (c.category === "critical" || c.category === "warning" || !c.category)
+  ).slice(0, 5);
 
-  if (quickWins.length > 0) {
+  if (topIssues.length > 0) {
     y = sectionTitle(doc, "Top Fixes Required", y);
     autoTable(doc, {
       startY: y,
@@ -164,11 +166,11 @@ function buildCoverPage(doc: jsPDF, result: ScanResult) {
         1: { cellWidth: 16, halign: "center" },
         2: { cellWidth: CONTENT_W - 52 },
       },
-      head: [["Check", "Status", "Action"]],
-      body: quickWins.map((c) => [c.label, statusLabel(c.status), c.message]),
+      head: [["Check", "Status", "Recommended Fix"]],
+      body: topIssues.map((c) => [c.label, statusLabel(c.status), c.fix ?? c.message]),
       didParseCell(data) {
         if (data.column.index === 1 && data.section === "body") {
-          const status = quickWins[data.row.index]?.status;
+          const status = topIssues[data.row.index]?.status;
           if (status) data.cell.styles.textColor = statusColor(status);
         }
       },
@@ -216,20 +218,30 @@ function buildSeoPage(doc: jsPDF, result: ScanResult) {
     columnStyles: {
       0: { cellWidth: 36 },
       1: { cellWidth: 16, halign: "center" },
-      2: { cellWidth: 50 },
-      3: { cellWidth: CONTENT_W - 102 },
+      2: { cellWidth: 20, halign: "center" },
+      3: { cellWidth: CONTENT_W - 72 },
     },
-    head: [["Check", "Status", "Value", "Notes"]],
+    head: [["Check", "Status", "Category", "Outcome / Fix"]],
     body: result.seo.checks.map((c) => [
       c.label,
       statusLabel(c.status),
-      c.value ? (c.value.length > 40 ? c.value.slice(0, 37) + "…" : c.value) : "—",
-      c.message,
+      c.category
+        ? c.category.charAt(0).toUpperCase() + c.category.slice(1)
+        : "—",
+      c.status !== "pass" && c.fix
+        ? c.fix.slice(0, 100) + (c.fix.length > 100 ? "…" : "")
+        : c.message,
     ]),
     didParseCell(data) {
       if (data.column.index === 1 && data.section === "body") {
         const check = result.seo.checks[data.row.index];
         if (check) data.cell.styles.textColor = statusColor(check.status);
+      }
+      if (data.column.index === 2 && data.section === "body") {
+        const check = result.seo.checks[data.row.index];
+        if (check?.category === "critical") data.cell.styles.textColor = C.red;
+        else if (check?.category === "warning") data.cell.styles.textColor = C.amber;
+        else if (check?.category === "opportunity") data.cell.styles.textColor = C.indigo;
       }
     },
   });
@@ -242,39 +254,48 @@ function buildPerformancePage(doc: jsPDF, result: ScanResult) {
   pageHeader(doc, "Performance");
 
   const p = result.performance;
+  // Prefer desktop CWV for the PDF report; fall back to mobile
+  const cwv = (p.desktop ?? p.mobile)?.cwv ?? null;
   let y = 20;
-  y = sectionTitle(doc, "Core Web Vitals (Estimated)", y);
+  y = sectionTitle(doc, cwv ? "Core Web Vitals (PageSpeed Insights)" : "Core Web Vitals", y);
 
-  const cwvRows = [
-    { label: "LCP — Largest Contentful Paint", value: `${p.cwv.lcp.value}s`, rating: p.cwv.lcp.rating, thresholds: "Good <2.5s / Needs Imp. <4s" },
-    { label: "FCP — First Contentful Paint",   value: `${p.cwv.fcp.value}s`, rating: p.cwv.fcp.rating, thresholds: "Good <1.8s / Needs Imp. <3s" },
-    { label: "INP — Interaction to Next Paint", value: `${p.cwv.inp.value}ms`, rating: p.cwv.inp.rating, thresholds: "Good <200ms / Needs Imp. <500ms" },
-    { label: "CLS — Cumulative Layout Shift",  value: `${p.cwv.cls.value}`,  rating: p.cwv.cls.rating, thresholds: "Good <0.1 / Needs Imp. <0.25" },
-  ];
+  const cwvRows = cwv ? [
+    { label: "LCP — Largest Contentful Paint",  value: `${cwv.lcp.value}s`,  rating: cwv.lcp.rating, thresholds: "Good <2.5s / Needs Imp. <4s" },
+    { label: "FCP — First Contentful Paint",    value: `${cwv.fcp.value}s`,  rating: cwv.fcp.rating, thresholds: "Good <1.8s / Needs Imp. <3s" },
+    { label: "INP — Interaction to Next Paint", value: `${cwv.inp.value}ms`, rating: cwv.inp.rating, thresholds: "Good <200ms / Needs Imp. <500ms" },
+    { label: "CLS — Cumulative Layout Shift",   value: `${cwv.cls.value}`,   rating: cwv.cls.rating, thresholds: "Good <0.1 / Needs Imp. <0.25" },
+  ] : [];
 
-  autoTable(doc, {
-    startY: y,
-    margin: { left: MARGIN, right: MARGIN },
-    theme: "striped",
-    headStyles: { fillColor: C.slate900, textColor: C.white, fontSize: 7.5, fontStyle: "bold" },
-    styles: { fontSize: 8.5, cellPadding: 3 },
-    columnStyles: {
-      0: { cellWidth: 72 },
-      1: { cellWidth: 22, halign: "center" },
-      2: { cellWidth: 24, halign: "center" },
-      3: { cellWidth: CONTENT_W - 118 },
-    },
-    head: [["Metric", "Value", "Rating", "Thresholds"]],
-    body: cwvRows.map((r) => [r.label, r.value, r.rating.charAt(0).toUpperCase() + r.rating.slice(1), r.thresholds]),
-    didParseCell(data) {
-      if (data.column.index === 2 && data.section === "body") {
-        const row = cwvRows[data.row.index];
-        if (row) data.cell.styles.textColor = ratingColor(row.rating);
-      }
-    },
-  });
+  if (cwvRows.length > 0) {
+    autoTable(doc, {
+      startY: y,
+      margin: { left: MARGIN, right: MARGIN },
+      theme: "striped",
+      headStyles: { fillColor: C.slate900, textColor: C.white, fontSize: 7.5, fontStyle: "bold" },
+      styles: { fontSize: 8.5, cellPadding: 3 },
+      columnStyles: {
+        0: { cellWidth: 72 },
+        1: { cellWidth: 22, halign: "center" },
+        2: { cellWidth: 24, halign: "center" },
+        3: { cellWidth: CONTENT_W - 118 },
+      },
+      head: [["Metric", "Value", "Rating", "Thresholds"]],
+      body: cwvRows.map((r) => [r.label, r.value, r.rating.charAt(0).toUpperCase() + r.rating.slice(1), r.thresholds]),
+      didParseCell(data) {
+        if (data.column.index === 2 && data.section === "body") {
+          const row = cwvRows[data.row.index];
+          if (row) data.cell.styles.textColor = ratingColor(row.rating);
+        }
+      },
+    });
+    y = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 12;
+  } else {
+    doc.setFontSize(8.5);
+    doc.setTextColor(...C.slate600);
+    doc.text("PageSpeed data not available for this report.", MARGIN, y + 8);
+    y += 20;
+  }
 
-  y = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 12;
   y = sectionTitle(doc, "Technical Metrics", y);
 
   const perfStatus = (val: number, good: number, warn: number) =>
@@ -321,7 +342,9 @@ function buildPerformancePage(doc: jsPDF, result: ScanResult) {
   doc.setFont("helvetica", "italic");
   doc.setTextColor(...C.slate400);
   doc.text(
-    "* CWV scores are heuristic estimates derived from static HTML analysis. Run Lighthouse for real field data.",
+    cwv
+      ? "* CWV data from Google PageSpeed Insights API. Field data = real Chrome user measurements (p75); Lab = Lighthouse simulation."
+      : "* PageSpeed data was not available at scan time. Re-scan the store to retrieve live CWV data.",
     MARGIN, y
   );
 }
