@@ -228,55 +228,60 @@ function ThemeCard({ theme, isShopify }: { theme: ThemeInfo | null; isShopify: b
       ) : !theme ? (
         <p className="text-sm text-slate-400">Theme data not exposed in page source</p>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-4">
 
-          {/* Name + update status */}
+          {/* Name row */}
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-lg font-bold text-slate-900 leading-tight">{theme.name}</p>
+              <p className="text-xl font-bold text-slate-900 leading-tight">{theme.name}</p>
               {theme.publisher && (
-                <p className="mt-0.5 text-xs text-slate-500">by {theme.publisher}</p>
+                <p className="mt-0.5 text-sm text-slate-500">by {theme.publisher}</p>
               )}
             </div>
             {theme.updateStatus && <UpdateStatusBadge status={theme.updateStatus} />}
           </div>
 
-          {/* Version table */}
-          <div className="rounded-lg border border-slate-100 bg-slate-50 divide-y divide-slate-100">
-            <div className="flex items-center justify-between px-3 py-2">
-              <span className="text-xs text-slate-400">Detected version</span>
+          {/* Version comparison — side by side */}
+          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-slate-100 bg-slate-100">
+            {/* Detected */}
+            <div className="flex flex-col gap-1 bg-white px-4 py-3">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Detected</p>
               {theme.version ? (
-                <span className="font-mono text-xs font-semibold text-slate-700">v{theme.version}</span>
+                <p className="font-mono text-2xl font-bold leading-none text-slate-800">
+                  v{theme.version}
+                </p>
               ) : (
-                <span className="text-xs italic text-slate-400">Not detected</span>
+                <p className="text-sm italic text-slate-400">Not detected</p>
               )}
             </div>
-            <div className="flex items-center justify-between px-3 py-2">
-              <span className="text-xs text-slate-400">Latest available</span>
+
+            {/* Latest known */}
+            <div className="flex flex-col gap-1 bg-white px-4 py-3">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Latest Known</p>
               {theme.latestVersion ? (
-                <div className="flex items-center gap-1.5">
-                  <span className={`font-mono text-xs font-semibold ${
+                <>
+                  <p className={`font-mono text-2xl font-bold leading-none ${
                     theme.updateStatus === "major-update" || theme.updateStatus === "minor-update"
-                      ? "text-amber-700" : "text-slate-700"
+                      ? "text-amber-600" : "text-slate-800"
                   }`}>
                     v{theme.latestVersion}
-                  </span>
+                  </p>
                   {theme.marketplaceDataConfidence && (
-                    <span className={`rounded px-1.5 py-px text-[9px] font-semibold ring-1 ${DATA_CONFIDENCE_CFG[theme.marketplaceDataConfidence].cls}`}>
+                    <span className={`mt-1 inline-flex w-fit rounded px-1.5 py-px text-[9px] font-semibold ring-1 ${DATA_CONFIDENCE_CFG[theme.marketplaceDataConfidence].cls}`}>
                       {DATA_CONFIDENCE_CFG[theme.marketplaceDataConfidence].label}
                     </span>
                   )}
-                </div>
+                </>
               ) : (
-                <span className="text-xs italic text-slate-400">Not in marketplace database</span>
+                <p className="text-sm italic text-slate-400">Not in database</p>
               )}
             </div>
           </div>
 
           {/* Update recommendation */}
           {(theme.updateStatus === "major-update" || theme.updateStatus === "minor-update") && theme.latestVersion && (
-            <div className="flex items-start gap-2 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2.5">
-              <svg className="mt-px h-3.5 w-3.5 shrink-0 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <div className="flex items-start gap-2.5 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2.5">
+              <svg className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
               </svg>
               <p className="text-xs leading-relaxed text-amber-800">
@@ -290,11 +295,11 @@ function ThemeCard({ theme, isShopify }: { theme: ThemeInfo | null; isShopify: b
 
           {/* Data source note */}
           {theme.marketplaceDataConfidence && (
-            <div className="flex items-start gap-1.5 border-t border-slate-100 pt-2.5">
+            <div className="flex items-start gap-1.5 border-t border-slate-100 pt-3">
               <svg className="mt-px h-3 w-3 shrink-0 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
               </svg>
-              <p className="text-[11px] leading-relaxed text-slate-400">
+              <p className="text-xs leading-relaxed text-slate-400">
                 {DATA_CONFIDENCE_CFG[theme.marketplaceDataConfidence].message}
                 {theme.releaseNotesUrl && <> <span className="text-indigo-400">Release notes available.</span></>}
               </p>
@@ -370,12 +375,12 @@ function AppsCard({ apps, isShopify }: { apps: DetectedApp[]; isShopify: boolean
         <div className="flex flex-col gap-3 overflow-y-auto" style={{ maxHeight: "340px" }}>
           {/* Overlap warnings */}
           {overlapCategories.map((cat) => (
-            <div key={`overlap-${cat}`} className="flex items-center gap-2 rounded-lg border border-amber-100 bg-amber-50 px-2.5 py-1.5">
-              <svg className="h-3 w-3 shrink-0 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <div key={`overlap-${cat}`} className="flex items-center gap-2 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2">
+              <svg className="h-3.5 w-3.5 shrink-0 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round"
                   d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
               </svg>
-              <p className="text-xs text-amber-700">
+              <p className="text-sm font-medium text-amber-700">
                 {groupMap.get(cat)!.length} {cat} tools detected — may overlap
               </p>
             </div>
@@ -386,18 +391,18 @@ function AppsCard({ apps, isShopify }: { apps: DetectedApp[]; isShopify: boolean
             const dot = CATEGORY_DOT[cat] ?? "bg-slate-400";
             return (
               <div key={cat}>
-                <p className="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
-                  <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dot}`} />
+                <p className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500">
+                  <span className={`h-2 w-2 shrink-0 rounded-full ${dot}`} />
                   {cat}
                 </p>
-                <div className="flex flex-wrap gap-1">
+                <div className="flex flex-wrap gap-1.5">
                   {items.map((app) => (
                     <span
                       key={app.id}
                       title={`${CONFIDENCE_LABEL[app.confidence]} detection`}
-                      className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-50"
+                      className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
                     >
-                      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${CONFIDENCE_DOT[app.confidence]}`} />
+                      <span className={`h-2 w-2 shrink-0 rounded-full ${CONFIDENCE_DOT[app.confidence]}`} />
                       {app.name}
                     </span>
                   ))}
@@ -414,7 +419,7 @@ function AppsCard({ apps, isShopify }: { apps: DetectedApp[]; isShopify: boolean
           <svg className="mt-0.5 h-3 w-3 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
           </svg>
-          <p className="text-[11px] leading-relaxed text-slate-500">
+          <p className="text-xs leading-relaxed text-slate-500">
             Public scans detect only frontend-visible apps and script integrations. A complete inventory requires Shopify admin access.
           </p>
         </div>
