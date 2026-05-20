@@ -1,4 +1,13 @@
+import { THEME_REGISTRY, type MarketplaceDataConfidence } from "@/app/lib/themeRegistry";
+export type { MarketplaceDataConfidence } from "@/app/lib/themeRegistry";
+
 // ─── Types ────────────────────────────────────────────────────────────────────
+
+export type UpdateStatus =
+  | "up-to-date"
+  | "minor-update"
+  | "major-update"
+  | "verification-limited";
 
 export type AppCategory =
   | "Email Marketing"
@@ -58,6 +67,12 @@ export interface ThemeInfo {
   free: boolean | null;
   /** high = full Shopify.theme object parsed; low = pattern-matched */
   confidence: "high" | "low";
+  /** Whether the running version is up to date vs marketplace data */
+  updateStatus: UpdateStatus | null;
+  /** How reliable our marketplace version data is */
+  marketplaceDataConfidence: MarketplaceDataConfidence | null;
+  /** Link to release notes if available in registry */
+  releaseNotesUrl: string | null;
 }
 
 export type SeoStatus = "pass" | "warn" | "fail";
@@ -324,64 +339,9 @@ function detectApps(html: string): DetectedApp[] {
   return detected;
 }
 
-// ─── Known-theme registry ──────────────────────────────────────────────────────
-// Keyed by schema_name (lowercase). Maps to display metadata.
-
-type KnownTheme = { name: string; publisher: string; free: boolean; latestVersion?: string };
-
-const KNOWN_THEMES: Record<string, KnownTheme> = {
-  // Shopify free themes
-  dawn:       { name: "Dawn",       publisher: "Shopify", free: true,  latestVersion: "14.0.0" },
-  debut:      { name: "Debut",      publisher: "Shopify", free: true,  latestVersion: "8.2.0"  },
-  brooklyn:   { name: "Brooklyn",   publisher: "Shopify", free: true,  latestVersion: "9.1.0"  },
-  narrative:  { name: "Narrative",  publisher: "Shopify", free: true,  latestVersion: "4.1.0"  },
-  venture:    { name: "Venture",    publisher: "Shopify", free: true,  latestVersion: "7.0.0"  },
-  supply:     { name: "Supply",     publisher: "Shopify", free: true,  latestVersion: "4.0.0"  },
-  minimal:    { name: "Minimal",    publisher: "Shopify", free: true,  latestVersion: "8.0.0"  },
-  boundless:  { name: "Boundless",  publisher: "Shopify", free: true,  latestVersion: "4.0.0"  },
-  sense:      { name: "Sense",      publisher: "Shopify", free: true,  latestVersion: "4.0.0"  },
-  craft:      { name: "Craft",      publisher: "Shopify", free: true,  latestVersion: "4.0.0"  },
-  refresh:    { name: "Refresh",    publisher: "Shopify", free: true,  latestVersion: "5.0.0"  },
-  crave:      { name: "Crave",      publisher: "Shopify", free: true,  latestVersion: "4.0.0"  },
-  ride:       { name: "Ride",       publisher: "Shopify", free: true,  latestVersion: "4.0.0"  },
-  origin:     { name: "Origin",     publisher: "Shopify", free: true,  latestVersion: "4.0.0"  },
-  studio:     { name: "Studio",     publisher: "Shopify", free: true,  latestVersion: "4.0.0"  },
-  colorblock: { name: "Colorblock", publisher: "Shopify", free: true,  latestVersion: "4.0.0"  },
-  taste:      { name: "Taste",      publisher: "Shopify", free: true,  latestVersion: "4.0.0"  },
-  highlight:  { name: "Highlight",  publisher: "Shopify", free: true,  latestVersion: "4.0.0"  },
-  trade:      { name: "Trade",      publisher: "Shopify", free: true,  latestVersion: "4.0.0"  },
-  publisher:  { name: "Publisher",  publisher: "Shopify", free: true,  latestVersion: "4.0.0"  },
-  cascade:    { name: "Cascade",    publisher: "Shopify", free: true,  latestVersion: "4.0.0"  },
-  hero:       { name: "Hero",       publisher: "Shopify", free: true,  latestVersion: "4.0.0"  },
-  // Premium themes
-  turbo:      { name: "Turbo",      publisher: "Out of the Sandbox", free: false, latestVersion: "8.0.1"  },
-  flex:       { name: "Flex",       publisher: "Out of the Sandbox", free: false, latestVersion: "8.0.1"  },
-  prestige:   { name: "Prestige",   publisher: "Maestrooo",          free: false, latestVersion: "10.7.2" },
-  impulse:    { name: "Impulse",    publisher: "Archetype Themes",   free: false, latestVersion: "7.3.0"  },
-  movement:   { name: "Movement",   publisher: "Archetype Themes",   free: false, latestVersion: "4.0.0"  },
-  motion:     { name: "Motion",     publisher: "Archetype Themes",   free: false, latestVersion: "10.0.0" },
-  context:    { name: "Context",    publisher: "Archetype Themes",   free: false, latestVersion: "3.0.0"  },
-  symmetry:   { name: "Symmetry",   publisher: "Clean Canvas",       free: false, latestVersion: "7.0.0"  },
-  retina:     { name: "Retina",     publisher: "Clean Canvas",       free: false, latestVersion: "7.0.0"  },
-  atlantic:   { name: "Atlantic",   publisher: "Clean Canvas",       free: false, latestVersion: "7.0.0"  },
-  pipeline:   { name: "Pipeline",   publisher: "Groupthought",       free: false, latestVersion: "5.0.0"  },
-  warehouse:  { name: "Warehouse",  publisher: "Pixel Union",        free: false, latestVersion: "7.0.0"  },
-  superstore: { name: "Superstore", publisher: "Pixel Union",        free: false, latestVersion: "6.0.0"  },
-  empire:     { name: "Empire",     publisher: "Pixel Union",        free: false, latestVersion: "9.0.0"  },
-  kingdom:    { name: "Kingdom",    publisher: "Pixel Union",        free: false, latestVersion: "5.0.0"  },
-  expanse:    { name: "Expanse",    publisher: "Pixel Union",        free: false, latestVersion: "5.0.0"  },
-  streamline: { name: "Streamline", publisher: "Blend Themes",       free: false, latestVersion: "7.0.0"  },
-  vantage:    { name: "Vantage",    publisher: "Eight Themes",       free: false, latestVersion: "8.0.0"  },
-  district:   { name: "District",   publisher: "Style Hatch",        free: false, latestVersion: "7.0.0"  },
-  debutify:   { name: "Debutify",   publisher: "Debutify",           free: false, latestVersion: "5.0.0"  },
-  booster:    { name: "Booster",    publisher: "BoosterTheme",       free: false, latestVersion: "5.0.0"  },
-  envy:       { name: "Envy",       publisher: "Maestrooo",          free: false, latestVersion: "8.0.0"  },
-  focal:      { name: "Focal",      publisher: "Maestrooo",          free: false, latestVersion: "8.0.0"  },
-  baseline:   { name: "Baseline",   publisher: "Fuel",               free: false, latestVersion: "5.0.0"  },
-};
+// ─── Theme version helpers ─────────────────────────────────────────────────────
 
 // Formats a raw schema_name slug into a human-readable name.
-// e.g., "allbirds-theme" → "Allbirds Theme", "GS2" → "GS2"
 function formatSchemaName(s: string): string {
   return s
     .replace(/[-_]/g, " ")
@@ -398,6 +358,20 @@ function compareSemver(a: string, b: string): number {
     if (diff !== 0) return diff;
   }
   return 0;
+}
+
+function deriveUpdateStatus(
+  detected: string | null,
+  latest: string | null,
+  dataConfidence: MarketplaceDataConfidence | null,
+): UpdateStatus | null {
+  if (!detected || !latest || !dataConfidence) return null;
+  if (dataConfidence === "limited") return "verification-limited";
+  const cmp = compareSemver(detected, latest);
+  if (cmp >= 0) return "up-to-date";
+  const detMajor = parseInt(detected.replace(/^v/, "").split(".")[0] ?? "0", 10);
+  const latMajor = parseInt(latest.replace(/^v/, "").split(".")[0] ?? "0", 10);
+  return latMajor > detMajor ? "major-update" : "minor-update";
 }
 
 // ─── Theme extraction ──────────────────────────────────────────────────────────
@@ -445,15 +419,16 @@ function extractThemeInfo(html: string): ThemeInfo | null {
       null;
 
     const key = schemaName?.toLowerCase() ?? "";
-    const known = KNOWN_THEMES[key];
-    const latestVersion = known?.latestVersion ?? null;
+    const entry = THEME_REGISTRY[key];
+    const latestVersion = entry?.latestVersion ?? null;
+    const dataConfidence = entry?.dataConfidence ?? null;
     const isOutdated =
       version && latestVersion
         ? compareSemver(version, latestVersion) < 0
         : null;
 
     return {
-      name: known?.name ?? (schemaName ? formatSchemaName(schemaName) : internalName || "Unknown Theme"),
+      name: entry?.name ?? (schemaName ? formatSchemaName(schemaName) : internalName || "Unknown Theme"),
       internalName,
       schemaName,
       version,
@@ -462,9 +437,12 @@ function extractThemeInfo(html: string): ThemeInfo | null {
       themeId,
       themeStoreId,
       role,
-      publisher: known?.publisher ?? null,
-      free: known?.free ?? null,
+      publisher: entry?.vendor ?? null,
+      free: entry?.free ?? null,
       confidence: "high",
+      updateStatus: deriveUpdateStatus(version, latestVersion, dataConfidence),
+      marketplaceDataConfidence: dataConfidence,
+      releaseNotesUrl: entry?.releaseNotesUrl ?? null,
     };
   }
 
@@ -482,20 +460,23 @@ function extractThemeInfo(html: string): ThemeInfo | null {
 
   for (const [re, key] of patterns) {
     if (re.test(html)) {
-      const known = KNOWN_THEMES[key];
+      const entry = THEME_REGISTRY[key];
       return {
-        name:          known?.name ?? formatSchemaName(key),
-        internalName:  "",
-        schemaName:    key,
-        version:       null,
-        latestVersion: known?.latestVersion ?? null,
-        isOutdated:    null, // can't compare without a detected version
-        themeId:       null,
-        themeStoreId:  null,
-        role:          null,
-        publisher:     known?.publisher ?? null,
-        free:          known?.free ?? null,
-        confidence:    "low",
+        name:                      entry?.name ?? formatSchemaName(key),
+        internalName:              "",
+        schemaName:                key,
+        version:                   null,
+        latestVersion:             entry?.latestVersion ?? null,
+        isOutdated:                null,
+        themeId:                   null,
+        themeStoreId:              null,
+        role:                      null,
+        publisher:                 entry?.vendor ?? null,
+        free:                      entry?.free ?? null,
+        confidence:                "low",
+        updateStatus:              "verification-limited",
+        marketplaceDataConfidence: entry?.dataConfidence ?? null,
+        releaseNotesUrl:           entry?.releaseNotesUrl ?? null,
       };
     }
   }

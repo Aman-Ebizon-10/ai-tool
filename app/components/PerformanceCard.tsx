@@ -102,7 +102,7 @@ function MetricRow({
   const [fast, mod] = cfg.thresholds;
 
   return (
-    <div className="mb-4 last:mb-0">
+    <div className="mb-3 last:mb-0">
       <div className="mb-1.5 flex items-center gap-2">
         <span className="w-8 shrink-0 text-sm font-bold text-slate-700">{cfg.label}</span>
         <span className="flex-1 text-xs text-slate-400 min-w-0 truncate">{cfg.description}</span>
@@ -135,7 +135,7 @@ function MetricRow({
 
 function MetricRowSkeleton() {
   return (
-    <div className="mb-4 last:mb-0">
+    <div className="mb-3 last:mb-0">
       <div className="mb-1.5 flex items-center gap-2">
         <div className="h-3 w-7 animate-pulse rounded bg-slate-100" />
         <div className="h-3 flex-1 animate-pulse rounded bg-slate-100" />
@@ -198,7 +198,7 @@ export default function PerformanceCard({
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
 
       {/* ── Section header ─────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+      <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3.5">
         <div className="flex items-center gap-2.5">
           <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50">
             <svg className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -229,16 +229,16 @@ export default function PerformanceCard({
       <div className="grid grid-cols-1 divide-y divide-slate-100 lg:grid-cols-5 lg:divide-x lg:divide-y-0">
 
         {/* Left: Mobile/Desktop tabs + score dial + resource stats */}
-        <div className="p-6 lg:col-span-2">
+        <div className="p-5 lg:col-span-2">
 
           {/* Tab toggle */}
-          <div className="mb-6 flex rounded-lg bg-slate-100 p-0.5">
+          <div className="mb-5 flex rounded-lg bg-slate-100 p-0.5">
             {(["mobile", "desktop"] as const).map((v) => (
               <button
                 key={v}
                 onClick={() => setView(v)}
                 className={[
-                  "flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-2.5 text-sm font-semibold transition-all",
+                  "flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-2 text-sm font-semibold transition-all",
                   view === v ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600",
                 ].join(" ")}
               >
@@ -259,7 +259,7 @@ export default function PerformanceCard({
           </div>
 
           {/* Score dial */}
-          <div className="mb-6 flex items-center gap-5">
+          <div className="mb-5 flex items-center gap-5">
             {current ? (
               <>
                 <ScoreRing score={current.score} />
@@ -301,7 +301,7 @@ export default function PerformanceCard({
           {/* Resource diagnostics grid */}
           <div className="grid grid-cols-2 gap-2">
             {resources.map(({ label, value, status }) => (
-              <div key={label} className="rounded-lg bg-slate-50 px-3 py-3">
+              <div key={label} className="rounded-lg bg-slate-50 px-3 py-2.5">
                 <p className="text-xs font-medium text-slate-400">{label}</p>
                 <p className={`mt-0.5 text-base font-bold ${RESOURCE_COLOR[status]}`}>{value}</p>
               </div>
@@ -310,17 +310,17 @@ export default function PerformanceCard({
         </div>
 
         {/* Right: CWV Assessment + Lab Diagnostics */}
-        <div className="p-6 lg:col-span-3">
+        <div className="p-5 lg:col-span-3">
           {cwv ? (
             <>
-              <p className="mb-4 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+              <p className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
                 Core Web Vitals Assessment
               </p>
               {CWV_OFFICIAL.map((cfg) => (
                 <MetricRow key={cfg.key} metric={cwv[cfg.key]} cfg={cfg} />
               ))}
 
-              <p className="mb-4 mt-6 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+              <p className="mb-3 mt-5 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
                 Lab Diagnostics
               </p>
               {LAB_METRICS.map((cfg) => (
@@ -340,12 +340,12 @@ export default function PerformanceCard({
             </>
           ) : psiLoading ? (
             <>
-              <p className="mb-4 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+              <p className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
                 Core Web Vitals Assessment
               </p>
               {[0, 1, 2].map((i) => <MetricRowSkeleton key={i} />)}
 
-              <p className="mb-4 mt-6 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+              <p className="mb-3 mt-5 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
                 Lab Diagnostics
               </p>
               {[0, 1, 2].map((i) => <MetricRowSkeleton key={i} />)}
